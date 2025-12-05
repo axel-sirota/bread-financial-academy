@@ -179,6 +179,15 @@ First batch (cells 0-4):
 STOP - Ask user: "I've added cells 0-4. How does it look? Should I continue?"
 WAIT FOR APPROVAL
 
+**VALIDATION CHECKPOINT**: Run basic validation after every 5 cells:
+```bash
+python validate_notebooks.py exercises/week_XX_topic/week_XX_topic.ipynb --type exercise
+```
+This ensures:
+- Python syntax is valid
+- No indentation errors
+- Cells are structured correctly
+
 Second batch (cells 5-9):
 - Cell 5: Dataset preview code
 - Cell 6: Topic 1 theory markdown
@@ -188,6 +197,8 @@ Second batch (cells 5-9):
 
 STOP - Ask user: "I've added cells 5-9. How does it look? Should I continue?"
 WAIT FOR APPROVAL
+
+**VALIDATION CHECKPOINT**: Run validation again
 
 ... repeat this cycle until notebook is complete
 ```
@@ -462,6 +473,7 @@ Must include:
 5. **Build EXERCISE notebook incrementally:**
    - Create skeleton
    - Add 5 cells at a time
+   - **VALIDATION CHECKPOINT**: Run `python validate_notebooks.py exercises/week_XX_topic/week_XX_topic.ipynb --type exercise` after every 5 cells
    - After each batch, STOP and ask: "I've added cells X-Y. How does it look? Should I continue?"
    - Wait for approval
    - Continue until complete
@@ -469,12 +481,19 @@ Must include:
    - Copy structure from exercise
    - Fill in solutions
    - Add explanatory comments
+   - **VALIDATION CHECKPOINT**: Run `python validate_notebooks.py solutions/week_XX_topic/week_XX_topic.ipynb --type solution` after every 5 cells
    - Add 5 cells at a time with approval
 7. **Final verification:**
+   - Run comprehensive validation: `python validate_notebooks.py --pair exercises/.../notebook.ipynb solutions/.../notebook.ipynb`
+   - Generate requirements.txt: `python validate_notebooks.py exercises/.../notebook.ipynb --requirements`
    - Both notebooks run top-to-bottom without errors
    - Markdown renders correctly
    - File sizes are reasonable (<500KB)
    - Timing is appropriate (demos ~30 min, labs ~60-90 min total)
+8. **Create week-specific test script:**
+   - Copy and customize test script to `exercises/week_XX_topic/test_notebooks.sh`
+   - Make it executable
+   - Test that it runs successfully
 
 ---
 
