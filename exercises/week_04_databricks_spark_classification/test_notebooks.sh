@@ -4,26 +4,27 @@
 
 set -e  # Exit on error
 
+echo "========================================"
+echo "Week 4 Notebook Validation"
+echo "========================================"
+echo ""
+
+# Paths relative to repository root
 EXERCISE="exercises/week_04_databricks_spark_classification/week_04_databricks_spark_classification.ipynb"
 SOLUTION="solutions/week_04_databricks_spark_classification/week_04_databricks_spark_classification.ipynb"
 
-echo "========================================================================="
-echo "Week 4: ML on Databricks - Spark & Classification - Notebook Validation"
-echo "========================================================================="
-
-echo ""
 echo "1. Validating exercise notebook..."
-.venv/bin/python3 validate_notebooks.py "$EXERCISE" --type exercise
-
+python3 validate_notebooks.py "$EXERCISE" --type exercise
 echo ""
+
 echo "2. Validating solution notebook..."
-.venv/bin/python3 validate_notebooks.py "$SOLUTION" --type solution
-
+python3 validate_notebooks.py "$SOLUTION" --type solution
 echo ""
+
 echo "3. Validating paired structure..."
-.venv/bin/python3 validate_notebooks.py --pair "$EXERCISE" "$SOLUTION"
-
+python3 validate_notebooks.py --pair "$EXERCISE" "$SOLUTION"
 echo ""
-echo "========================================================================="
-echo "✅ All validations passed!"
-echo "========================================================================="
+
+echo "========================================"
+echo "✅ All validations PASSED!"
+echo "========================================"
