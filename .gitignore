@@ -215,6 +215,16 @@ __marimo__/
 # Previous materials (planning/reference only, not for students)
 previous_materials/
 
+# Claude Desktop solutions (AI-generated, not for version control)
+claude-desktop-solutions/
+
+# Planning and prompt documents (working files, not for students)
+plans/
+prompts/
+
+# Zip archives (generated artifacts)
+zips/
+
 # Downloaded datasets (use public URLs in notebooks instead)
 datasets/*.csv
 datasets/*.zip
@@ -229,6 +239,10 @@ infrastructure/terraform/*.tfstate
 infrastructure/terraform/*.tfstate.backup
 infrastructure/terraform/terraform_plans/
 *.tfplan
+
+# Terraform persistent outputs (contain credentials)
+infrastructure/sagemaker/terraform/persistent/student-credentials.csv
+infrastructure/sagemaker/terraform/persistent/admin-studio-url.txt
 
 # Local environment files
 .env.local

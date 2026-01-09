@@ -1,0 +1,150 @@
+Channel Work,Week,Sequence,Path,Course title,Time,Learning Type,Decision,Notes
+Dee,0,,SKILL IQ,Databricks Machine Learning,,Skill IQ,Keep,DONE
+Dee,0,,SKILL IQ,AWS Machine Learning,,Skill IQ,Keep,DONE
+Dee,0,,SKILL IQ,LLMs for Data Professionals,,Skill IQ,Keep,DONE
+Dee,0,,SKILL IQ,RAG for Developers,,Skill IQ,Keep,DONE
+Dee,1,1,Introduction to Deep Learning,Deep Learning: The Big Picture,1:28,Course,Keep,DONE
+Dee,1,2,Introduction to Deep Learning,Neural Networks for Data Professionals: A Comprehensize Introduction,0:40,Course,Keep,DONE
+Dee,1,3,Introduction to Deep Learning,Demystifying Image Recognition: Dive Into Deep Learning,0:28,Course,Keep,DONE
+Dee,1,4,Introduction to Deep Learning,Mastering Natural Language Processing (NLP) with Deep Learning,0:42,Course,Keep,DONE
+Dee,1,5,Introduction to Deep Learning,Unlocking Speech Recognition: Deep Learning Acoustics,0:39,Course,Keep,DONE
+Dee,2,6,Introduction to Deep Learning,Crafting Intelligent Recommendation Systems with Deep Learning,0:41,Course,Keep,DONE
+Dee,2,7,Introduction to Deep Learning,Convolutional Neural Networks (CNNs): Visual Mastery with Deep Learning,0:37,Course,Keep,DONE
+Dee,2,8,Introduction to Deep Learning,Recurrent Neural Networks (RNNs): Deep Learning for Sequence and Time Series,0:32,Course,Keep,DONE
+Dee,2,9,Introduction to Deep Learning,Driving Deep into Deep Belief Networks (DBNs),0:38,Course,Keep,DONE
+Dee,2,10,Introduction to Deep Learning,Transformers and LLMs ,0:33,Course,Keep,DONE
+Dee,3,11,Databricks Machine Learning,Building Machine Learning Models on Databricks,2:21,Course,Keep,DONE
+Dee,3,12,Databricks Machine Learning,Building Deep Learning Models on Databricks,2:29,Course,Keep,DONE
+Dee,4,13,Databricks Machine Learning,Managing Models Using MLflow on Databricks,1:59,Course,Keep,DONE
+Dee,4,14,Databricks Machine Learning,Feature Sharing and Discovery Using the Databricks Feature Store,2:02,Course,Keep,DONE
+Dee,4,15,Databricks Machine Learning,Automate Machine Learning Using Databricks AutoML,1:50,Course,Keep,DONE
+Ryan,5,16,AWS Machine Learning / AI,Getting Started with Amazon Lex,2:06,Course,Keep,DONE
+Ryan,5,17,AWS Machine Learning / AI,Analyzing Text on AWS with Amazon Comprehend,2:08,Course,Keep,DONE
+Ryan,5,18,AWS Machine Learning / AI,Building a Voice-enabled Serverless Website with AWS Polly,1:46,Course,Keep,DONE
+Ryan,6,19,AWS Machine Learning / AI,Translating Languages on AWS with Amazon Translate,2:32,Course,Keep,DONE
+Ryan,6,20,AWS Machine Learning / AI,Turning Speech into Text on AWS with Amazon Transcribe,1:29,Course,Keep,DONE
+Ryan,6,21,AWS Machine Learning / AI,Extracting Text and Data with Amazon Textract,1:21,Course,Keep,DONE
+Ryan,7,22,AWS Machine Learning / AI,Developing Applications with AWS Rekognition,1:27,Course,Keep,
+Ryan,7,23,AWS Machine Learning / AI,"Build, Train, and Deploy Machine Learning Models with Amazon …",2:41,Course,Keep,
+Ryan,7,24,AWS Machine Learning / AI,Deep Learning Instances and Frameworks on AWS,1:23,Course,Keep,Course retired. Double check with Tim/Dana!
+Ryan,8,25,,GitHub Fundamentals,4:26,Course,Keep,DONE
+Ryan,9,26,GitHub Foundations,GitHub Foundations: GitHub Copilot,0:29,Course,Keep,DONE
+Ryan,9,27,GitHub Foundations,GitHub Foundations: AI Paired Programming,1:52,Course,Keep,DONE
+Ryan,9,28,GitHub Copilot in Practice,Navigating and Analyzing Codebases with GitHub Copilot,0:33,,Keep,DONE
+Ryan,9,29,GitHub Copilot in Practice,GitHub Copilot Code Review,0:36,,Keep,DONE
+Ryan,9,30,GitHub Copilot in Practice,Secure Development with GitHub Copilot,0:45,,Keep,DONE
+Ryan,10,31,GitHub Copilot in Practice,Writing Tests with GitHub Copilot,0:58,,Keep,DONE
+Ryan,10,32,GitHub Copilot in Practice,Refactor and Optimize Code with GitHub Copilot,1:12,,Keep,DONE
+Ryan,10,33,GitHub Copilot in Practice,CI/CD Integration with GitHub Copilot,1:27,,Keep,DONE
+Ryan,10,34,GitHub Copilot in Practice,Creating Developer Documentation with GitHub Copilot,0:34,,Keep,DONE
+Ryan,11,35,Large Language Models (LLMs) for Data Professionals,Introduction to Large Language Models for Data Practitioners,0:39,,Keep,DONE
+Ryan,11,36,Large Language Models (LLMs) for Data Professionals,Build Solutions with Pre-trained LLMs,0:38,,Keep,DONE
+Ryan,11,37,Large Language Models (LLMs) for Data Professionals,Advanced Text Generation and Analysis with LLMs,0:38,,Keep,DONE
+Ryan,11,38,Large Language Models (LLMs) for Data Professionals,Optimize LLMs for Specific Business Needs,0:31,,Keep,DONE
+Ryan,11,39,Large Language Models (LLMs) for Data Professionals,LLMs in Action: Real-world Applications,0:29,,Keep,DONE
+Ryan,11,40,Large Language Models (LLMs) for Data Professionals,Ensure the Ethical Use of LLMs in Data Projects,0:27,,Keep,DONE
+Ryan,11,41,Large Language Models (LLMs) for Data Professionals,Scale and Deploy LLMs in Production Environments,0:35,,Keep,DONE
+Ryan,12,42,Generative AI for Data Professionals,Creating Synthetic Datasets with Generative AI,0:15,,Keep,DONE
+Ryan,12,43,Generative AI for Data Professionals,Data Portfolio Development with Generative AI,0:12,,Keep,DONE
+Ryan,12,44,Generative AI for Data Professionals,Building Data Science Skills with Generative AI,0:16,,Keep,DONE
+Ryan,12,45,Generative AI for Data Professionals,Data Analysis with Generative AI,0:12,,Keep,DONE
+Ryan,12,46,Generative AI for Data Professionals,Querying Data with Generative AI,0:15,,Keep,DONE
+Ryan,12,47,Generative AI for Data Professionals,Preparing Data with Generative AI,0:09,,Keep,DONE
+Ryan,12,48,Generative AI for Data Professionals,Managing Modern Databases with Generative AI,0:13,,Keep,DONE
+Ryan,12,49,Generative AI for Data Professionals,Feature Engineering with Generative AI,0:20,,Keep,DONE
+Ryan,12,50,Generative AI for Data Professionals,Model Evaluation with Generative AI,0:16,,Keep,DONE
+Ryan,12,51,Generative AI for Data Professionals,Visualizing Data with Generative AI,0:13,Lab,Keep,DONE
+Ryan,12,52,Generative AI for Data Professionals,Fundamentals of Sentiment Analysis,0:40,,Keep,DONE
+Ryan,13,53,Amazon Bedrock Deep Dive,Introduction to Amazon Bedrock,0:34,Course,Keep,DONE
+Ryan,13,54,Amazon Bedrock Deep Dive,Working with Amazon Bedrock Using Python,0:58,Course,Keep,DONE
+Ryan,13,55,Amazon Bedrock Deep Dive,How to Make API Calls Using Python and the AWS Boto3 Library,1:00,LAB,Keep,DONE
+Ryan,13,56,Amazon Bedrock Deep Dive,Building Generative AI Applications with Amazon Bedrock,1:03,Course,Keep,DONE
+Ryan,13,57,Amazon Bedrock Deep Dive,Build a Chatbot with Amazon Bedrock,1:00,Lab,Keep,DONE
+Ryan,13,58,Amazon Bedrock Deep Dive,Responsible AI with Amazon Bedrock,0:35,Course,Keep,DONE
+Ryan,,,Amazon Bedrock Deep Dive,Managing Costs for Amazon Bedrock,0:38,Course,Cut,
+Ryan,,,Amazon Bedrock Deep Dive,Caching Responses and Cost-Efficient Embedding Storage with Amazon Bedrock,1:00,Lab,Cut,
+Ryan,,,Amazon Bedrock Deep Dive,Training Custom Models with Amazon Bedrock,0:28,,Cut,
+Ryan,14,59,Introduction to Machine Learning Model Training,Model Training: Best Practices for Data Practitioners,0:47,Course,Keep,DONE
+Ryan,14,60,Introduction to Machine Learning Model Training,Efficient Data Feeding and Labeling for Model Training,0:32,Course,Keep,DONE
+Ryan,14,61,Introduction to Machine Learning Model Training,Monitor and Evaluate Model Performance During Training,0:49,Course,Keep,DONE
+Ryan,14,62,Introduction to Machine Learning Model Training,Optimize Model Training with Hyperparameter Tuning,0:28,Course,Keep,DONE
+Ryan,14,63,Introduction to Machine Learning Model Training,Prevent Overfitting in Model Training,0:34,Course,Keep,DONE
+Ryan,14,64,Introduction to Machine Learning Model Training,Deploy Trained Models,0:32,Course,Keep,DONE
+Ryan,14,65,Introduction to Machine Learning Model Training,Continuous Model Training with Evolving Data Streams,0:29,Course,Keep,DONE
+Ryan,14,66,Deploying Generative AI with Amazon SageMaker,Introduction to Amazon Sagemaker,0:21,Course,Keep,DONE
+Ryan,14,67,Deploying Generative AI with Amazon SageMaker,Training Models with Amazon Sagemaker,0:18,Course,Keep,DONE
+Ryan,14,68,Deploying Generative AI with Amazon SageMaker,Model Evaluation with Amazon Sagemaker,0:16,Course,Keep,DONE
+Ryan,14,69,Deploying Generative AI with Amazon SageMaker,Model Deployment with Amazon Sagemaker,0:20,Course,Keep,DONE
+Ryan,15,70,Agentic LLMs for Developers Path,Introduction to Developing AI Agents,0:36:00,,Keep,DONE
+Ryan,15,71,Agentic LLMs for Developers Path,Frameworks for Developing LLM Agents,0:28:00,,Keep,DONE
+Ryan,15,72,Agentic LLMs for Developers Path,Domain-specific LLM Agents,0:27:00,,Keep,DONE
+Ryan,15,73,Agentic LLMs for Developers Path,Evaluating and Optimizing LLM Agents,0:43:00,,Keep,DONE
+Ryan,15,74,Agentic LLMs for Developers Path,Developing Multi-agent Systems,0:45:00,,Keep,DONE
+Dee,16,75,Integrating Agentic AI for Developers Path,Deploying AI Agents in Production Environments,0:51:00,,Keep,DONE
+Dee,16,76,Integrating Agentic AI for Developers Path,Integrating AI Agents in Enterprise Systems,0:49:00,,Keep,DONE
+Dee,16,77,Integrating Agentic AI for Developers Path,Integrating AI Agents into Development Workflows,1:03:00,,Keep,DONE
+Dee,16,78,Integrating Agentic AI for Developers Path,Agentic AI Lifecycle Management,0:32:00,,Keep,DONE
+Dee,16,79,Integrating Agentic AI for Developers Path,Human–AI Agent Collaboration,0:39:00,,Keep,DONE
+Dee,17,80,Retrieval Augmented Generation (RAG) for Developers,Deploying and Maintaining RAG Systems,0:20:00,,Keep,DONE
+Dee,17,81,Retrieval Augmented Generation (RAG) for Developers,Evaluating RAG Solutions,0:17:00,,Keep,DONE
+Dee,17,82,Retrieval Augmented Generation (RAG) for Developers,Optimizing Data Retrieval Techniques,0:14:00,,Keep,DONE
+Dee,17,83,Retrieval Augmented Generation (RAG) for Developers,Modular RAGs,0:16:00,,Keep,DONE
+Dee,17,84,Retrieval Augmented Generation (RAG) for Developers,Improving Retrieval with RAG Fine-tuning,0:20:00,,Keep,DONE
+Dee,17,85,Retrieval Augmented Generation (RAG) for Developers,Vector Space Models and Embeddings in RAGs,0:16:00,,Keep,DONE
+Dee,17,86,Retrieval Augmented Generation (RAG) for Developers,Expansion Strategies for RAGs,0:19:00,,Keep,DONE
+Dee,17,87,Retrieval Augmented Generation (RAG) for Developers,Integrating Knowledge Bases for RAGs,0:23:00,,Keep,DONE
+Dee,18,88,Retrieval Augmented Generation (RAG) for Developers,Relevance and Scoring Mechanisms for RAGs,0:32:00,,Keep,DONE
+Dee,18,89,Retrieval Augmented Generation (RAG) for Developers,Multi-modal RAGs,0:24:00,,Keep,DONE
+Dee,18,90,Retrieval Augmented Generation (RAG) for Developers,Fact Verification with RAGs,0:25:00,,Keep,DONE
+Dee,18,91,Retrieval Augmented Generation (RAG) for Developers,Federated Learning and Privacy-preserving RAGs,0:16:00,,Keep,DONE
+Dee,18,92,Retrieval Augmented Generation (RAG) for Developers,Implementing Multilingual Generative AI Cross-lingual RAGs,0:19:00,Course,Keep,DONE
+Dee,18,93,Retrieval Augmented Generation (RAG) for Developers,Fundamentals of Retrieval Augmented Generation (RAG),0:45:00,Lab,Keep,Ryan Harvey This lab wont allow me to add to channel there is an odd blurred icon - is it because its AWS ? 
+Dee,19,94,Machine Learning Engineering,Foundations of Machine Learning Engineering,0:42,Course,Keep,DONE
+Dee,19,95,Machine Learning Engineering,Data Engineering for Machine Learning,1:01,Course,Keep,DONE
+Dee,19,96,Machine Learning Engineering,Machine Learning Model Development,0:42,Course,Keep,DONE
+Dee,19,97,Machine Learning Engineering,Model Deployment and Serving,0:59,Course,Keep,DONE
+Dee,20,98,Machine Learning Engineering,Introduction to MLOps,0:40,Course,Keep,DONE
+Dee,20,99,Machine Learning Engineering,Demystifying Machine Learning Operations (MLOps),2:15,Course,Keep,DONE
+Dee,20,100,Machine Learning Engineering,Scalability and Performance Optimization for ML,0:51,Course,Keep,DONE
+Dee,,,Machine Learning Engineering,Productionalizing Data Pipeline with Apache Airflow 1,2:13,Course,Cut,
+Dee,20,101,Machine Learning Engineering,Principles for Data Quality Measures,0:44,Course,Keep,DONE
+Dee,21,102,"Data Orchestration and Workflow Management with Apache Airflow 
+",First Look: Apache Airflow 3.0,0:36,Course,Keep,DONE
+Dee,21,103,"Data Orchestration and Workflow Management with Apache Airflow 
+",Up and Running with Apache Airflow,0:35,Course,Keep,DONE
+Dee,21,104,"Data Orchestration and Workflow Management with Apache Airflow 
+",Create Complex DAGs and Task Dependencies with Apache Airflow,0:23,Course,Keep,DONE
+Dee,21,105,"Data Orchestration and Workflow Management with Apache Airflow 
+",Optimize Workflows with Apache Airflow Operator,0:23,Course,Keep,DONE
+Dee,21,106,"Data Orchestration and Workflow Management with Apache Airflow 
+",Build DAGs Using the Taskflow API in Apache Airflow,0:25,Course,Keep,DONE
+Dee,21,107,"Data Orchestration and Workflow Management with Apache Airflow 
+",Effective Workflow Management with Apache Airflow,0:22,Course,Keep,DONE
+Dee,21,108,"Data Orchestration and Workflow Management with Apache Airflow 
+",Integrate DataBases with Apache Airflow,0:15,Course,Keep,DONE
+Dee,21,109,"Data Orchestration and Workflow Management with Apache Airflow 
+",Work with APIs in Apache Airflow,0:17,Course,Keep,DONE
+Dee,22,110,"Data Orchestration and Workflow Management with Apache Airflow 
+",Integrate External Services with Apache Airflow,0:24,Course,Keep,DONE
+Dee,22,111,"Data Orchestration and Workflow Management with Apache Airflow 
+",Build a Data Pipeline with Apache Airflow,0:18,Course,Keep,DONE
+Dee,22,112,"Data Orchestration and Workflow Management with Apache Airflow 
+",Create a Dynamic DAGs with Apache Airflow,0:17,Course,Keep,DONE
+Dee,22,113,"Data Orchestration and Workflow Management with Apache Airflow 
+",Monitor and Maintain Apache Airflow,0:23,Course,Keep,DONE
+Dee,22,114,"Data Orchestration and Workflow Management with Apache Airflow 
+",Write and Run a Basic DAG in Apache Airflow,0:40,Lab,Keep,DONE
+Dee,22,115,"Data Orchestration and Workflow Management with Apache Airflow 
+",Schedule Workflows in Apache Airflow,0:45,Lab,Keep,DONE
+Dee,22,116,"Data Orchestration and Workflow Management with Apache Airflow 
+",Integrate Databases with Apache Airflow,0:45,Lab,Keep,DONE - This is repeated from Week 21 - so not added in subsection
+Dee,22,117,"Data Orchestration and Workflow Management with Apache Airflow 
+",Manage Task Failures and Retiries in Apache Airflow,0:34,Lab,Keep,DONE
+Dee,23,118,AI Ethics,Navigating Societal Impacts of AI,0:22:00,,Keep,DONE
+Dee,23,119,AI Ethics,Explainability Methods for Black-box AI Models,0:37:00,,Keep,DONE
+Dee,23,120,AI Ethics,Strategies for Effective AI Governance,0:22:00,,Keep,DONE
+Dee,23,121,AI Ethics,Version Control for AI,0:18:00,,Keep,DONE
+Dee,23,122,AI Ethics,Monitoring AI in Production,0:22:00,,Keep,DONE
+Dee,23,123,AI Ethics,Privacy-preserving AI,0:20:00,,Keep,DONE
+Dee,23,124,AI Ethics,Introduction to Reinforcement Learning from Human Feedback (RLHF),0:15:00,,Keep,DONE
+Dee,23,125,AI Ethics,AI Bias Detection and Mitigation,0:25:00,,Keep,DONE

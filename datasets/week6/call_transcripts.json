@@ -1,0 +1,92 @@
+{
+  "call_001": {
+    "title": "Fraud Dispute - Unauthorized Charge",
+    "transcript": "Agent: Thank you for calling First National Bank, this is Sarah speaking. How can I help you today?\n\nCustomer: Yes, I'm calling about a charge on my account that I didn't make. I need to dispute it immediately.\n\nAgent: I understand. I'm sorry to hear that. Can you please provide your account number so I can look into this?\n\nCustomer: It's 4532-7891-2345-6789. The charge is for eight hundred forty seven dollars and ninety nine cents.\n\nAgent: Thank you. I see the charge from Global Electronics for $847.99 on November 12th. Can you tell me more about why you're disputing this?\n\nCustomer: I never made that purchase. I've never even heard of Global Electronics. I think someone stole my card information. This is really frustrating.\n\nAgent: I completely understand your frustration, and I'm very sorry this happened to you. I'm going to flag this as potential fraud and start an investigation right away.\n\nCustomer: Thank you. What happens next? Will I get my money back? I'm really worried about this.\n\nAgent: Yes, absolutely. I've placed a temporary hold on your card for security and initiated the dispute process. You should receive a provisional credit within 24 hours, and a new card will arrive within 3 to 5 business days.\n\nCustomer: Okay, thank you for your help Sarah. I appreciate you taking this seriously.\n\nAgent: Of course. Is there anything else I can help you with today?\n\nCustomer: No, that's all. Thank you again.\n\nAgent: You're welcome. Thank you for calling First National Bank. Have a good day.",
+    "duration_seconds": 145,
+    "expected_sentiment": "NEGATIVE",
+    "is_fraud_case": true,
+    "speakers": [
+      {
+        "speaker": "spk_0",
+        "role": "agent"
+      },
+      {
+        "speaker": "spk_1",
+        "role": "customer"
+      }
+    ],
+    "word_count": 256
+  },
+  "call_002": {
+    "title": "Account Balance Inquiry",
+    "transcript": "Agent: Good afternoon, First National Bank, this is Michael. How may I assist you?\n\nCustomer: Hi, I just want to check my account balance please.\n\nAgent: Certainly. May I have your account number?\n\nCustomer: Sure, it's 9876-5432-1098-7654.\n\nAgent: Thank you. I see your checking account has a current balance of two thousand three hundred forty five dollars and sixty seven cents.\n\nCustomer: Okay, that sounds right. And what about my savings?\n\nAgent: Your savings account shows a balance of eight thousand nine hundred twelve dollars.\n\nCustomer: Perfect, thank you. That's all I needed.\n\nAgent: You're welcome. Is there anything else I can help you with today?\n\nCustomer: No, that's it. Thanks.\n\nAgent: Thank you for calling First National Bank. Have a great day.",
+    "duration_seconds": 75,
+    "expected_sentiment": "NEUTRAL",
+    "is_fraud_case": false,
+    "speakers": [
+      {
+        "speaker": "spk_0",
+        "role": "agent"
+      },
+      {
+        "speaker": "spk_1",
+        "role": "customer"
+      }
+    ],
+    "word_count": 123
+  },
+  "call_003": {
+    "title": "Lost Card Report",
+    "transcript": "Agent: First National Bank, this is Jennifer. How can I help you?\n\nCustomer: I lost my debit card! I think it might have been stolen. I need to cancel it right now!\n\nAgent: I understand this is stressful. Let me help you right away. Can you provide your account number?\n\nCustomer: Yes, it's 1234-5678-9012-3456. Please hurry, I'm really worried someone is using it.\n\nAgent: I'm blocking the card right now as we speak. The card ending in 3456 is now deactivated. No one can use it.\n\nCustomer: Oh thank goodness. Have there been any charges I didn't make?\n\nAgent: Let me check your recent activity. I see two charges in the last hour - one at a gas station for forty five dollars and one at an electronics store for three hundred twenty dollars. Do you recognize these?\n\nCustomer: No! I haven't used my card today at all. I've been at home all day. Those aren't mine!\n\nAgent: I understand. I'm marking both of these as fraudulent charges right now and starting a dispute. You'll receive a full refund within 24 hours.\n\nCustomer: Thank you so much. When will I get a new card?\n\nAgent: I'm ordering a replacement card with expedited shipping. You'll receive it within 2 business days. Is your mailing address still 456 Oak Street, Phoenix, Arizona?\n\nCustomer: Yes, that's correct. Thank you for helping me so quickly.\n\nAgent: Of course. Stay safe, and call us if you have any other concerns.",
+    "duration_seconds": 120,
+    "expected_sentiment": "NEGATIVE",
+    "is_fraud_case": true,
+    "speakers": [
+      {
+        "speaker": "spk_0",
+        "role": "agent"
+      },
+      {
+        "speaker": "spk_1",
+        "role": "customer"
+      }
+    ],
+    "word_count": 245
+  },
+  "call_004": {
+    "title": "Positive Follow-up - Issue Resolved",
+    "transcript": "Agent: Thank you for calling First National Bank, this is David. How can I help you today?\n\nCustomer: Hi David! I'm calling to say thank you, actually. I had an issue with a duplicate charge last week and your colleague Maria helped me sort it out.\n\nAgent: That's wonderful to hear! I'm glad we could resolve that for you. I can see in your account notes that Maria processed a refund for the duplicate transaction.\n\nCustomer: Yes, exactly. The refund came through yesterday and everything looks correct now. I just wanted to call and let you know how happy I am with the service.\n\nAgent: Thank you so much for taking the time to call and share that feedback. I'll make sure Maria gets recognized for her excellent work.\n\nCustomer: Please do! She was so patient and helpful. I've been a customer for ten years and this is why I stay with First National.\n\nAgent: We really appreciate your loyalty. Is there anything else I can assist you with today?\n\nCustomer: No, that's all. Just wanted to share the positive feedback. Have a great day!\n\nAgent: You too! Thank you for being a valued customer.",
+    "duration_seconds": 90,
+    "expected_sentiment": "POSITIVE",
+    "is_fraud_case": false,
+    "speakers": [
+      {
+        "speaker": "spk_0",
+        "role": "agent"
+      },
+      {
+        "speaker": "spk_1",
+        "role": "customer"
+      }
+    ],
+    "word_count": 195
+  },
+  "call_005": {
+    "title": "International Transfer Inquiry (Spanish Speaker)",
+    "transcript": "Agent: First National Bank, this is Ana speaking. How may I help you?\n\nCustomer: Hola, buenos d\u00edas. I need to make a wire transfer to Mexico. Can you help me with that?\n\nAgent: Of course! I'd be happy to help you with an international wire transfer. May I have your account number please?\n\nCustomer: Yes, my account is 5555-4444-3333-2222.\n\nAgent: Thank you. I see your account. To send an international wire to Mexico, I'll need the recipient's full name, their bank name, and the CLABE number which is the Mexican bank account number.\n\nCustomer: Okay, the name is Carlos Rodriguez Martinez, the bank is Banco Nacional de M\u00e9xico, and the CLABE is 012 180 001234567890.\n\nAgent: Perfect. And how much would you like to send?\n\nCustomer: I want to send one thousand five hundred dollars. How much will the fee be?\n\nAgent: The wire transfer fee is thirty five dollars, and the exchange rate today is approximately 17.2 pesos per dollar. Your recipient would receive about twenty five thousand eight hundred pesos.\n\nCustomer: That sounds good. Please proceed with the transfer.\n\nAgent: I've initiated the transfer. It will arrive within 1 to 2 business days. You'll receive a confirmation email shortly. Is there anything else?\n\nCustomer: No, muchas gracias. Thank you for your help.\n\nAgent: De nada. Thank you for choosing First National Bank. Have a great day!",
+    "duration_seconds": 110,
+    "expected_sentiment": "NEUTRAL",
+    "is_fraud_case": false,
+    "speakers": [
+      {
+        "speaker": "spk_0",
+        "role": "agent"
+      },
+      {
+        "speaker": "spk_1",
+        "role": "customer"
+      }
+    ],
+    "word_count": 228
+  }
+}

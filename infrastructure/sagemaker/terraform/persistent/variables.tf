@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "num_students" {
   description = "Number of students"
-  default     = 60
+  default     = 66
 }
 
 variable "account_alias" {
