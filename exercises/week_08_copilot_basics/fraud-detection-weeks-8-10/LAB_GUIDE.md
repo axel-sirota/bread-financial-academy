@@ -93,8 +93,8 @@ Your instructor will provide the repository in one of two ways:
 
 ```bash
 cd ~/projects
-git clone <URL-provided-by-instructor>
-cd fraud-detection-weeks-8-10
+git clone https://github.com/axel-sirota/bread-financial-academy-fraud-detection-starter-repo.git
+cd bread-financial-academy-fraud-detection-starter-repo
 code .
 ```
 
