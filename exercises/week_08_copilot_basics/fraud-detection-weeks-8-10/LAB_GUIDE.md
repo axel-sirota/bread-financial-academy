@@ -85,25 +85,26 @@ Now you need to sign in and activate Copilot. Follow these steps exactly:
 - [ ] Copilot Free activated
 - [ ] Copilot icon is solid (not grayed out)
 
-### Step 1.4: Clone the Repository
+### Step 1.4: Get the Repository
 
-Open the VS Code terminal (`` Ctrl+` ``) and run the following commands:
+Your instructor will provide the repository in one of two ways:
+
+**Option A — Clone from GitHub** (if your instructor provides a URL):
 
 ```bash
-# Navigate to where you want the project
 cd ~/projects
-
-# Clone the starter repository
-git clone https://github.com/bread-financial-academy/fraud-detection-weeks-8-10.git
-
-# Enter the project directory
+git clone <URL-provided-by-instructor>
 cd fraud-detection-weeks-8-10
-
-# Open the project in VS Code
 code .
 ```
 
-> **Note**: If VS Code opens a new window, continue working in the new window. If the `code .` command does not work, open VS Code manually and use **File > Open Folder** to open the `fraud-detection-weeks-8-10` directory.
+**Option B — Open from zip** (if your instructor provides a zip file):
+
+1. Download and unzip the file your instructor shared
+2. Open VS Code
+3. Go to **File > Open Folder** and select the `fraud-detection-weeks-8-10` folder
+
+> **Note**: If VS Code opens a new window, continue working in the new window.
 
 Once the project is open, explore the file structure in the Explorer panel (left sidebar):
 
@@ -674,6 +675,12 @@ def get_fraud_statistics(df: pd.DataFrame) -> dict:
 
 #### Verification
 
+**First time only**: Before running verification commands, install dependencies. Make sure your terminal is in the `fraud-detection-weeks-8-10/` directory, then run:
+
+```bash
+pip install -r requirements.txt
+```
+
 Open the VS Code terminal and run:
 
 ```bash
@@ -905,7 +912,7 @@ from sklearn.model_selection import train_test_split
 logger = logging.getLogger(__name__)
 ```
 
-3. Add the default parameters constant:
+3. Add the default parameters constant. Note: we include a few extra hyperparameters (`min_child_weight`, `subsample`, `colsample_bytree`) beyond what the notebook used — these are production best practices for XGBoost:
 
 ```python
 DEFAULT_PARAMS = {
