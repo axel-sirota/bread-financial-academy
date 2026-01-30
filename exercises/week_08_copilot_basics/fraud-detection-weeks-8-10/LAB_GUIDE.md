@@ -129,6 +129,30 @@ Open `notebooks/00_fraud_detection_pipeline.ipynb` to confirm you can see the fr
 - [ ] Project open in VS Code
 - [ ] Can see the fraud detection notebook
 
+### Step 1.5: Create Your Personal Branch
+
+**Important**: You will NOT work on the `main` branch. Each student works on their own branch so you can all push without conflicts.
+
+Open the terminal and run:
+
+```bash
+# Replace YOUR_NAME with your first name (lowercase, no spaces)
+git checkout -b student/YOUR_NAME
+```
+
+For example: `git checkout -b student/maria` or `git checkout -b student/james`
+
+Verify you are on your branch:
+
+```bash
+git branch
+```
+
+You should see an asterisk (`*`) next to your branch name, not `main`.
+
+- [ ] Personal branch created (`student/YOUR_NAME`)
+- [ ] `git branch` shows you are on your branch
+
 ### Lab 1: Verification Test
 
 Let us make sure Copilot is actually working.
@@ -1160,8 +1184,8 @@ git commit -m "Extract notebook into production modules with Copilot
 - Extracted src/features.py with time and amount feature engineering
 - Extracted src/model.py with XGBoost training and MLflow tracking"
 
-# Push to remote
-git push origin main
+# Push YOUR branch to remote (replace YOUR_NAME with the branch name you created in Step 1.5)
+git push -u origin student/YOUR_NAME
 ```
 
 ### What We Accomplished

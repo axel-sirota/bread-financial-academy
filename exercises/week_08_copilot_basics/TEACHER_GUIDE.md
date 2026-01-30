@@ -3,8 +3,8 @@
 ## Pre-Session Checklist
 
 ### 1 Week Before
-- [ ] Verify GitHub org repo `fraud-detection-weeks-8-10` is accessible to all students
-- [ ] OR: distribute the starter repo as a zip from `exercises/week_08_copilot_basics/fraud-detection-weeks-8-10/`
+- [ ] Starter repo is at: [bread-financial-academy-fraud-detection-starter-repo](https://github.com/axel-sirota/bread-financial-academy-fraud-detection-starter-repo)
+- [ ] OR: distribute as a zip from `exercises/week_08_copilot_basics/fraud-detection-weeks-8-10/`
 - [ ] Ensure students have **personal** GitHub accounts (NOT work SSO — Copilot Free requires personal)
 - [ ] Send pre-session email with:
   - Install VS Code: https://code.visualstudio.com/
@@ -31,6 +31,13 @@
 - **"You need a Copilot subscription"**: Student is on work account. Must use PERSONAL GitHub.
 - **No ghost text**: File might not be `.py`. Or Copilot is still loading (wait 30 sec).
 - **VS Code too old**: Need version 1.85+. Have students update.
+
+**Branching — CRITICAL**:
+After cloning, **every student must create their own branch** before doing any work:
+```
+git checkout -b student/firstname
+```
+Students push to `student/firstname`, **never to main**. This prevents 60 students from colliding. Remind them during Step 1.5 in the lab guide. If a student accidentally commits to main, just have them `git checkout -b student/name` — it carries their commits to the new branch.
 
 **Teaching points to make**:
 > "Copilot Free gives you 2,000 code completions and 50 chat messages per month. That's plenty for learning. The key insight: autocomplete (ghost text) uses your completion quota. Chat uses your chat quota. Use autocomplete more — it's faster and uses less quota."
