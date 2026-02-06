@@ -222,6 +222,9 @@ claude-desktop-solutions/
 plans/
 prompts/
 
+# Build guidelines (construction blueprints, not for students)
+**/GUIDELINES.md
+
 # Zip archives (generated artifacts)
 zips/
 

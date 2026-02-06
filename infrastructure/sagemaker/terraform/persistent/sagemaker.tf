@@ -131,7 +131,7 @@ resource "aws_sagemaker_space" "shared_workspace" {
   space_settings {
     jupyter_lab_app_settings {
       default_resource_spec {
-        instance_type = "ml.m5.large"  # 2 vCPU, 8 GiB memory - better for 67 students
+        instance_type = "ml.m5.4xlarge"  # 16 vCPU, 64 GiB memory - handles 67 concurrent students
       }
     }
   }
