@@ -225,6 +225,9 @@ prompts/
 # Build guidelines (construction blueprints, not for students)
 **/GUIDELINES.md
 
+# Teacher guides (instructor notes, not for students)
+**/TEACHER_GUIDE.md
+
 # Zip archives (generated artifacts)
 zips/
 
