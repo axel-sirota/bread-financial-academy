@@ -103,6 +103,25 @@ Each week's notebook follows this structure:
 - Focus on application and muscle memory, not theory discovery
 - Optional/extra labs provide challenge for advanced students
 
+#### 5. **Peer Discussion Prompts**
+- Include structured "Discussion" markdown cells between major sections (3-5 minutes each)
+- Questions should focus on consequences, tradeoffs, and real-world implications — not just "how" but "why" and "what if"
+- Frame discussions from the student's professional perspective (e.g., "Think about this from Bread Financial's perspective")
+- Topics should connect to production concerns: cost, privacy, reproducibility, regulation, team roles
+
+#### 6. **Shorter In-Class Labs + Homework Extensions**
+- Keep in-class labs concise (~15 minutes each, 2-3 per session)
+- Prioritize more demo time and peer discussion over longer labs
+- Add "Homework Extension" section to each lab with async exercises that build on the in-class work
+- Students consolidate learning through homework, not just during class time
+
+#### 7. **Optional Deep-Dive Notebooks**
+- When a topic has both a practical and theoretical side, split into:
+  - **Main notebook**: Practical, focused, shorter — required for all students
+  - **Optional notebook**: Theoretical deep-dive with PyTorch internals, math, etc. — for advanced learners
+- Optional notebooks should be self-contained and clearly marked as supplementary
+- Name convention: `week_XX_optional_topic_name.ipynb`
+
 #### 5. **Public Datasets Only**
 - Use standard public datasets: MNIST, CIFAR-10, Iris, scikit-learn datasets, HuggingFace datasets
 - Fetch from public URLs (sklearn.datasets, torchvision.datasets, etc.)
