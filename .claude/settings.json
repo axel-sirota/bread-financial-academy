@@ -42,6 +42,9 @@
       "Bash(aws rds delete:*)",
       "Bash(aws secretsmanager delete:*)",
       "Bash(aws ssm delete:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/axelsirota/repos/bread-financial-academy/zips"
     ]
   },
   "allowedCommands": [

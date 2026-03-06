@@ -360,73 +360,75 @@
 * Advanced tokenization internals  
 * Model comparison (GPT-4, Claude, Llama)
 
-## **Week 12: GenAI for Data Science**
+## **Week 12: HuggingFace Local Models + LLM Evaluation & Error Analysis**
 
 **Students arrive with:**
 
-* Week 11 LLM fundamentals, prompting experience  
-* Self-paced videos: Synthetic data generation, LLM evaluation metrics, prompt engineering for data tasks, LLM-assisted analysis
+* Week 11 LLM fundamentals, prompting experience (OpenAI, Anthropic, basic HuggingFace)
+* Self-paced videos: HuggingFace ecosystem, model selection, LLM evaluation metrics, prompt engineering best practices
 
 **We teach/practice:**
 
-* Using LLMs for data augmentation and synthetic data generation  
-* Evaluating LLM-powered applications (accuracy, consistency, hallucinations)  
-* Error analysis techniques for LLM outputs  
-* Using LLMs for exploratory data analysis, visualization generation, and insight extraction
+* Deep dive into HuggingFace Transformers: pipeline API, AutoModel classes, local inference on CPU/GPU
+* Running and comparing open-source models locally (Flan-T5, GPT-2, decoder vs encoder-decoder)
+* Evaluating LLM-powered applications (accuracy, consistency, hallucinations)
+* Error analysis techniques for LLM outputs — categorizing failures and iterative prompt improvement
 
 **Labs:**
 
-1. Generate synthetic training data using LLMs (text classification, NER, etc.)  
-2. Build evaluation framework for LLM outputs (automated metrics \+ human review)  
-3. Error analysis: Categorize and analyze LLM failures, improve prompts iteratively  
-4. LLM-assisted data analysis: Upload dataset, use LLM to generate plots, extract insights, suggest analysis approaches
+1. HuggingFace local prompting: Run multiple models locally, compare output quality on fraud classification task
+2. Build evaluation framework for LLM outputs (automated metrics + human review rubric)
+3. Error analysis: Categorize and analyze LLM failures across models, improve prompts iteratively
 
 **Skills developed:**
 
-* Can use LLMs to augment training datasets  
-* Can evaluate and measure LLM application quality  
-* Can systematically analyze and improve LLM outputs  
-* Can leverage LLMs for exploratory data analysis
+* Can run and compare open-source models locally with HuggingFace
+* Can evaluate and measure LLM application quality with structured metrics
+* Can systematically analyze and improve LLM outputs
+* Understand tradeoffs between cloud APIs and local models
 
 **Extra/Optional (async):**
 
-* Advanced synthetic data techniques  
-* Custom evaluation metrics  
+* Custom evaluation metrics (BLEU, ROUGE, BERTScore)
 * Automated prompt optimization
+* HuggingFace Model Hub exploration and model cards
 
 ## **Week 13: Amazon Bedrock**
 
 **Students arrive with:**
 
-* Week 11-12 LLM and GenAI experience  
+* Week 11-12 LLM, HuggingFace, and evaluation experience
 * Self-paced videos: Amazon Bedrock overview, available models (Claude, Llama, Titan, etc.), Bedrock pricing, Knowledge Bases concepts
 
 **We teach/practice:**
 
-* Model selection criteria (performance, cost, latency, context length, capabilities)  
-* Testing and comparing different Bedrock models for specific use cases  
-* Pricing calculation and cost optimization strategies  
+* Model selection criteria (performance, cost, latency, context length, capabilities)
+* Testing and comparing different Bedrock models for specific use cases
+* Pricing calculation and cost optimization strategies
+* Synthetic data generation using Bedrock models
+* LLM-assisted exploratory data analysis with Bedrock
 * Setting up and using Bedrock Knowledge Bases for RAG
 
 **Labs:**
 
-1. Model comparison: Test multiple Bedrock models (Claude, Llama, etc.) on same task, evaluate quality/speed/cost  
-2. Pricing estimation exercise: Calculate costs for different scenarios (API calls, token usage, knowledge base queries)  
-3. Build a Knowledge Base: Upload documents, configure chunking/embeddings, query with natural language  
-4. Cost optimization: Implement strategies (prompt caching, model routing, batch processing)
+1. Model comparison: Test multiple Bedrock models (Claude, Llama, etc.) on same task, evaluate quality/speed/cost
+2. Synthetic data generation: Use Bedrock models to generate training data for fraud detection (text classification, NER)
+3. LLM-assisted EDA: Upload dataset to Bedrock, use LLM to generate plots, extract insights, suggest analysis approaches
+4. Build a Knowledge Base: Upload documents, configure chunking/embeddings, query with natural language
 
 **Skills developed:**
 
-* Can select appropriate Bedrock models based on requirements  
-* Can estimate and optimize costs for LLM applications  
-* Can build and query Bedrock Knowledge Bases  
+* Can select appropriate Bedrock models based on requirements
+* Can estimate and optimize costs for LLM applications
+* Can use LLMs to augment training datasets and assist with data analysis
+* Can build and query Bedrock Knowledge Bases
 * Understand trade-offs in managed LLM services
 
 **Extra/Optional (async):**
 
-* Advanced Bedrock features  
-* Guardrails implementation  
-* Multi-model routing strategies
+* Advanced Bedrock features (Guardrails, model routing)
+* Cost optimization strategies (prompt caching, batch processing)
+* Advanced synthetic data techniques
 
 ## **Week 14: Training AI Models**
 
