@@ -1,0 +1,6 @@
+boto3
+deepeval
+difflib
+matplotlib
+numpy
+pandas
