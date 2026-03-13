@@ -442,6 +442,16 @@ resource "aws_iam_role_policy" "sagemaker_admin_execution_policy" {
         Resource = "*"
       },
       {
+        Sid    = "BedrockFullAccess"
+        Effect = "Allow"
+        Action = [
+          "bedrock:*",
+          "bedrock-agent:*",
+          "bedrock-agent-runtime:*"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "IAMPassRoleAdmin"
         Effect = "Allow"
         Action = [

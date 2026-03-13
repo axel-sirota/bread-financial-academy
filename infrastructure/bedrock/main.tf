@@ -50,17 +50,24 @@ resource "aws_iam_policy" "bedrock_student_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "BedrockModelAccess"
+        Sid    = "BedrockModelInvoke"
         Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
           "bedrock:Converse",
           "bedrock:ConverseStream",
+        ]
+        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+      },
+      {
+        Sid    = "BedrockModelList"
+        Effect = "Allow"
+        Action = [
           "bedrock:ListFoundationModels",
           "bedrock:GetFoundationModel",
         ]
-        Resource = "arn:aws:bedrock:${var.aws_region}::foundation-model/*"
+        Resource = "*"
       },
       {
         Sid    = "BedrockKnowledgeBaseAccess"
@@ -84,6 +91,12 @@ resource "aws_iam_group_policy_attachment" "bedrock_student" {
 # Attach to SageMaker execution role (students run notebooks from Studio)
 resource "aws_iam_role_policy_attachment" "bedrock_sagemaker_execution" {
   role       = var.sagemaker_execution_role_name
+  policy_arn = aws_iam_policy.bedrock_student_access.arn
+}
+
+# Attach to SageMaker admin execution role (admin/instructor notebooks)
+resource "aws_iam_role_policy_attachment" "bedrock_sagemaker_admin_execution" {
+  role       = var.sagemaker_admin_execution_role_name
   policy_arn = aws_iam_policy.bedrock_student_access.arn
 }
 

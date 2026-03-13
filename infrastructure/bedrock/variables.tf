@@ -13,6 +13,11 @@ variable "sagemaker_execution_role_name" {
   default     = "SageMakerAcademyExecutionRole"
 }
 
+variable "sagemaker_admin_execution_role_name" {
+  description = "Existing SageMaker admin execution role name (instructor notebooks)"
+  default     = "SageMakerAcademyAdminExecutionRole"
+}
+
 variable "kb_name" {
   description = "Name for the Bedrock Knowledge Base and OpenSearch collection"
   default     = "bread-academy-fraud-kb"
