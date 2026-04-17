@@ -327,6 +327,23 @@ resource "aws_iam_role_policy" "sagemaker_execution_policy" {
           "sagemaker:CreatePresignedDomainUrl"
         ]
         Resource = "*"
+      },
+      {
+        Sid    = "BedrockAgentCoreAccess"
+        Effect = "Allow"
+        Action = [
+          "bedrock-agentcore:*",
+          "bedrock-agentcore-control:*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "BedrockAccess"
+        Effect = "Allow"
+        Action = [
+          "bedrock:*"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -447,7 +464,9 @@ resource "aws_iam_role_policy" "sagemaker_admin_execution_policy" {
         Action = [
           "bedrock:*",
           "bedrock-agent:*",
-          "bedrock-agent-runtime:*"
+          "bedrock-agent-runtime:*",
+          "bedrock-agentcore:*",
+          "bedrock-agentcore-control:*"
         ]
         Resource = "*"
       },
