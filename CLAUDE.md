@@ -383,6 +383,29 @@ Every SageMaker-week notebook that depends on a Bedrock model or a shared resour
 
 These probes have saved multiple class days. Do not skip.
 
+### Verify Before You Assume (env vars and return shapes)
+
+**Two real class-day fires taught this lesson the hard way. Do not repeat them.**
+
+Before writing ANY notebook code that reads a library-defined environment variable OR unpacks a value returned by a library function or tool, you MUST verify against the actual library source — not against documentation summaries, web-search snippets, or memory of what the name "should" be.
+
+**Concrete procedure**:
+
+1. For env vars — grep the source for every `os.getenv(...)` and `os.environ[...]`:
+   ```bash
+   curl -s https://raw.githubusercontent.com/<org>/<repo>/main/<path>.py | grep -nE "os\.(getenv|environ)"
+   ```
+   Record the EXACT string names. Never paraphrase.
+2. For return shapes — grep the source for `return ` in the target function body. Read the dict literal or object construction. Copy its structure verbatim into your consumer code.
+3. For tool wrappers (Strands `@tool`, LangChain, etc.) — the wrapped tool's return shape is NOT the underlying API's return shape. Tools wrap their output in ToolResult envelopes like `{toolUseId, status, content: [{text: "..."}]}` with the raw results already consumed into formatted strings. If you need raw per-chunk structured data, call the underlying API directly, not `agent.tool.<name>(...)`.
+
+**Two specific traps documented from Week 17-18**:
+
+- `strands_tools.retrieve` reads env vars `KNOWLEDGE_BASE_ID`, `AWS_REGION`, `MIN_SCORE`, `RETRIEVE_ENABLE_METADATA_DEFAULT`. NOT `STRANDS_KNOWLEDGE_BASE_ID` or `MIN_SCORE_DEFAULT` — those are plausible-sounding but wrong.
+- `agent.tool.retrieve(text=...)` returns `{"toolUseId": "...", "status": "success", "content": [{"text": "formatted string"}]}`. The Bedrock `retrievalResults` list is already consumed and flattened into a string. For raw chunks use `boto3.client('bedrock-agent-runtime').retrieve(...)` directly.
+
+If you cannot answer "what env vars does this library read" and "what shape does this function return" from grep-verified source code, STOP and verify BEFORE writing code that depends on the answer. Fixing this at class time is 10x more expensive than verifying once.
+
 ### Pre-Class Model-Access Verification (di-mfa)
 
 Before finalizing a new week's notebook, verify that EVERY Bedrock model the notebook references has `status == "ACTIVE"` in the `di-mfa` account:

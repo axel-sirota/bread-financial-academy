@@ -54,6 +54,84 @@ from typing import Dict
 
 
 # ---------------------------------------------------------------------------
+# OVERVIEW - index document that names every policy in the KB
+# ---------------------------------------------------------------------------
+# Why this exists: agent queries like "what are the fraud policies?" or
+# "list the policies" score POORLY against specific-topic docs in the KB
+# because no individual doc contains the literal word "policies" at a
+# high-weighted position. Shipping an explicit index doc ensures those
+# high-level queries have a high-confidence chunk to retrieve.
+
+OVERVIEW_DOCS: Dict[str, str] = {
+    "fraud_policy_overview.md": """# Fraud Policy Overview and Index
+
+This is the master index of fraud policies and procedures in this knowledge
+base. The fraud policy program at a financial institution includes the
+following documented policies, each of which appears as its own document in
+this knowledge base.
+
+## Regulatory Compliance Policies
+
+- **CTR Threshold Policy** - Currency Transaction Report filing requirements
+  under 31 CFR 1010.311. Banks must file a CTR for any currency transaction
+  exceeding $10,000 in a single business day.
+- **CTR Aggregation Policy** - Rules for aggregating multiple currency
+  transactions by the same person within a business day.
+- **Structuring Policy** - Federal prohibition on structuring transactions
+  to evade the CTR threshold under 31 USC 5324.
+- **OFAC Screening Policy** - Sanctions screening requirements for wire
+  transfers and high-risk jurisdictions.
+- **Wire Transfer Recordkeeping Policy (Travel Rule)** - Data retention
+  requirements for international wires of $3,000 or more.
+- **SAR Filing Policy** - Suspicious Activity Report thresholds and 30-day
+  filing window.
+- **Enhanced Due Diligence (EDD) Policy** - Elevated customer review
+  requirements for PEPs, high-risk jurisdictions, and cash-intensive
+  businesses.
+
+## Fraud Detection Policies
+
+- **Structuring Red Flags** - Detection patterns for deposits just under $10,000.
+- **Velocity Anomalies Policy** - Rules for flagging multiple transactions
+  in short windows.
+- **Account Takeover (ATO) Indicators Policy** - Signals suggesting
+  unauthorized account access.
+- **Elder Financial Exploitation Policy** - FinCEN red flags for
+  exploitation of older adults.
+- **Card Testing Pattern Policy** - Detection of stolen-card reconnaissance.
+- **Geographic Mismatch Policy** - Transaction location versus customer
+  location rules.
+- **Unusual Hours Monitoring Policy** - Enhanced review for transactions
+  between 1:00 AM and 5:00 AM.
+
+## Product-Specific Policies
+
+- **Credit Card New Payee Large Transfer Hold Policy** - 24-hour hold on
+  wires over $5,000 to new payees.
+- **Wire Transfer High-Risk MCC Policy** - Enhanced due diligence for
+  high-risk merchant categories.
+- **ACH Return Fraud Procedure** - Handling for suspicious ACH credits
+  with 60-day return window.
+- **Loan Application Identity Theft Red Flags** - FTC Red Flags Rule
+  application for loan origination.
+- **Deposit Product Hold Policy** - Regulation CC holds and internal
+  extended-hold rules.
+
+## How to Use This Knowledge Base
+
+Ask about a specific policy by name or by topic. The fraud investigation
+agent will retrieve the relevant policy document and cite its source
+location. If you are investigating a specific transaction, combine the
+transaction details with the relevant policy name for best retrieval
+results.
+
+Source: Internal fraud policy index, compiled from FinCEN, FFIEC, OFAC,
+FTC, and 31 CFR regulatory guidance.
+""",
+}
+
+
+# ---------------------------------------------------------------------------
 # FRAUD DETECTION - red flags, pattern recognition, investigative procedures
 # ---------------------------------------------------------------------------
 
@@ -648,6 +726,7 @@ Source: 12 CFR 229 (Regulation CC); internal procedure example.
 def write_docs(out_dir: Path) -> int:
     total = 0
     groups = {
+        "overview":   OVERVIEW_DOCS,
         "fraud":      FRAUD_DOCS,
         "compliance": COMPLIANCE_DOCS,
         "products":   PRODUCT_DOCS,
