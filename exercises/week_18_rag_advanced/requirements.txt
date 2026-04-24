@@ -1,0 +1,11 @@
+boto3
+importlib
+langchain_aws
+langchain_community
+langchain_core
+langchain_text_splitters
+pandas
+ragas
+sagemaker
+strands
+strands_tools
