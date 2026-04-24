@@ -346,6 +346,135 @@ For weeks focused on Git, SDLC, MLOps, and Airflow, we'll determine structure on
 - Always verify notebook opens and runs correctly
 - Check file size remains manageable (<500KB for most notebooks)
 
+## Build Workflow (Hard-Won Rules)
+
+The following rules come from what has broken in real class sessions. Follow all of them.
+
+### Notebook Authoring
+
+- **Build exercise first, then copy-edit to solution.** Never build exercise and solution in parallel. Use `cp exercises/week_XX_topic/*.ipynb solutions/week_XX_topic/` and then replace each `= None  # YOUR CODE` lab cell with a complete solution. This produces perfect structural parity.
+- **One cell at a time.** Use `NotebookEdit` with `edit_mode="insert"` + `cell_id` of the cell to insert AFTER. Never bulk-write .ipynb JSON with the `Write` tool, even for "just 5 cells". Bulk writes silently truncate.
+- **Cell order rule.** After the first cell, always pass `cell_id` to `NotebookEdit` so cells don't end up at the top.
+- **Default approval cadence: 5 cells at a time.** Wait for the user to say "continue" before the next batch. Lift this gate only when the user explicitly says "go until end" / "i trust you" / "remote-control" for THAT notebook.
+- **No AI-tells in cell content.** No em dashes (`—`), en dashes (`–`), Unicode multiplication signs (`×`), or emojis (✅ ❌ 🔹 💡 etc.) anywhere in cell bodies, print statements, markdown headers, or plan files. Use plain ASCII hyphens and the letter `x`. This rule applies to BOTH the exercise and solution notebooks AND to files under `plans/`.
+
+### Environment Setup (SageMaker Weeks)
+
+Use the EXACT auth pattern from Weeks 15-17:
+
+```python
+import sagemaker
+from sagemaker import get_execution_role
+sess = sagemaker.Session()
+role = get_execution_role()
+AWS_REGION = sess.boto_region_name
+os.environ["AWS_REGION"] = AWS_REGION
+os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
+```
+
+No `getpass` for AWS credentials on SageMaker. Do export `AWS_REGION` to env because `strands_tools` reads from it.
+
+### Pre-flight Probes (Mandatory)
+
+Every SageMaker-week notebook that depends on a Bedrock model or a shared resource MUST include pre-flight probes right after setup:
+
+1. **LLM probe** — a minimal `bedrock_runtime.converse()` call with 10-token max, `maxTokens=10, temperature=0`. If it throws, print "Ask your instructor to enable Bedrock access for {MODEL_ID}." and re-raise. Fails loud BEFORE any agent code runs.
+2. **KB probe** (if the notebook uses a shared KB) — call `bedrock_agent.get_knowledge_base(knowledgeBaseId=...)`. Same fail-loud pattern.
+
+These probes have saved multiple class days. Do not skip.
+
+### Model IDs (di-mfa AWS account, April 2026)
+
+| Purpose | Model ID | Notes |
+|---------|----------|-------|
+| LLM (SageMaker weeks 15-17) | `us.anthropic.claude-3-haiku-20240307-v1:0` | Haiku 3 - this is what di-mfa has model access for. Do NOT switch to Haiku 4.5 without explicit new permission grant. |
+| Embeddings (Weeks 17+) | `amazon.titan-embed-text-v2:0` | 1024 dim, FLOAT32 |
+| Reranker (Week 18+, us-east-1) | `cohere.rerank-v3-5:0` | Amazon Rerank 1.0 is NOT in us-east-1 |
+
+### Library Pins (FAISS-inclusive Weeks)
+
+```python
+%pip install -q \
+    "strands-agents>=1.37,<2" \
+    "strands-agents-tools[mem0-memory]>=0.2" \
+    "boto3>=1.35" \
+    "faiss-cpu>=1.8,<2" \
+    "rank_bm25>=0.2.2" \
+    "opensearch-py>=2.4" \
+    "numpy<2"
+```
+
+- `numpy<2` is MANDATORY. FAISS breaks on numpy 2.x.
+- Use `strands-agents-tools[mem0-memory]` (with the extra) - the `mem0_memory` tool has a hard import of `opensearch-py` at module level.
+- Import `strands_tools` BEFORE any direct `import faiss` to avoid kernel segfaults.
+
+### Lab Safety-Net Cells (Required When Lab Output is Used Later)
+
+If a lab produces a variable, agent, or DataFrame that a LATER cell depends on, add a "safety-net" code cell right after the lab starter cell. The safety-net provides the working solution gated by a `None` check:
+
+```python
+# Lab 1 safety-net: run this if you didn't finish Lab 1 so the rest of
+# the notebook still works. SKIP this cell if you DID finish Lab 1.
+if my_agent is None:
+    print("Using Lab 1 safety-net so the rest of the notebook can run.")
+    my_agent = <working implementation>
+```
+
+Rule: students must be able to reach the end of the notebook even if they skipped a lab.
+
+In the SOLUTION notebook, safety-net cells are REMOVED (the lab cell IS the solution).
+
+### `# YOUR CODE` Hygiene
+
+The line after `# YOUR CODE` must NOT reveal the answer.
+
+Good:
+```python
+result = None  # YOUR CODE
+```
+
+Bad (hint leak):
+```python
+result = None  # YOUR CODE: filter df where amount > 1000 and count
+```
+
+Test: cover the solution, read only the exercise. Can a non-student pattern-match a solution in under 30 seconds? If yes, rewrite.
+
+### Instructor Pre-Work Scripts
+
+Weeks that need shared AWS infrastructure (Bedrock KB, AgentCore Memory, etc.) ship TWO instructor-only artifacts alongside the student notebook:
+
+1. **Content/corpus builder** (no AWS needed) - writes local files the KB will ingest.
+2. **Bootstrap script** (runs against `di-mfa`, idempotent) - provisions IAM role, S3 bucket, S3 Vectors store, Bedrock KB, starts ingestion, verifies, prints the distribution ID.
+
+Both live under `exercises/week_XX_topic/`. The instructor runs them once before class; students never run them.
+
+### AWS Account and Profile
+
+All AWS work uses the `di-mfa` profile (account 535146832369, us-east-1). Refresh the MFA session with `scripts/aws-mfa-login.sh` when tokens expire. Never use default credentials. Every AWS CLI invocation must be explicit: `AWS_PROFILE=di-mfa aws ...` or `aws --profile di-mfa ...`.
+
+### Validation
+
+After both notebooks exist, run:
+
+```bash
+python3 validate_notebooks.py --pair \
+    exercises/week_XX_topic/week_XX_topic.ipynb \
+    solutions/week_XX_topic/week_XX_topic.ipynb
+```
+
+Known validator quirks (ignore these; they are NOT notebook defects):
+
+- `Missing modules: boto3, sagemaker, strands, strands_tools` - these are in SageMaker Studio, not the local machine.
+- `Cell N: Syntax error at line X` on a `%pip install` cell - the validator's `ast.parse` trips on `%` cell magics; it only skips cells starting with `!`.
+- `No lab cells found` - the validator looks for "Lab" + "YOUR CODE" in the same cell; if labs are titled in a preceding markdown cell (the normal pattern), it doesn't match.
+
+The authoritative check is `--pair`. If that PASSES, the notebook structure is correct.
+
+### Upload Convention
+
+Zip BOTH exercise and solution notebooks plus any instructor scripts and the corpus. Use `zip -r` to preserve directory structure (NEVER `-j`, because filenames collide between `exercises/` and `solutions/`). Upload to `s3://courses.axel.net/Bread Financial Academy/Week NN Topic/week_NN.zip` and apply `public-read` ACL.
+
 ## Contributing & Development Workflow
 
 ### For Course Authors/Instructors
