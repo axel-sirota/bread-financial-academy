@@ -1,0 +1,5 @@
+boto3
+importlib
+sagemaker
+strands
+strands_tools

@@ -389,6 +389,37 @@ if variable_1 is not None:
 - Starter code with `None # YOUR CODE` placeholders
 - Verification/test code (so students know if they're right)
 
+### CRITICAL: Lab Safety-Net Cell (required when lab output is used later)
+
+**If a lab produces a variable, object, or artifact that a LATER cell depends on,
+you MUST add a "safety-net" code cell immediately AFTER the lab starter cell in
+the EXERCISE notebook.** The safety-net cell contains the working solution,
+gated by a check so students who completed the lab do NOT overwrite their work.
+
+Pattern:
+
+```python
+# Lab 1 starter (student writes their code here)
+my_retriever = None  # YOUR CODE
+```
+
+Next cell (REQUIRED if `my_retriever` is used in later cells):
+
+```python
+# Lab 1 safety-net: if you didn't finish Lab 1, run this cell so the rest of
+# the notebook still works. If you DID finish Lab 1, SKIP this cell.
+if my_retriever is None:
+    print("Using Lab 1 safety-net so the rest of the notebook can run.")
+    my_retriever = <working implementation>
+```
+
+**When to add a safety-net cell**: any time a lab output feeds a downstream
+demo, lab, or wrap-up cell. When in doubt, add it. Students must be able to
+reach the end of the notebook even if they skipped a lab.
+
+**Do NOT add a safety-net cell** for standalone labs whose output is only
+consumed by the verification prints in their own cell.
+
 ### Solution Notebook (solutions/week_XX_topic/)
 
 **Lab solution cells should have:**
@@ -477,12 +508,15 @@ Must include:
    - After each batch, STOP and ask: "I've added cells X-Y. How does it look? Should I continue?"
    - Wait for approval
    - Continue until complete
-6. **Build SOLUTION notebook incrementally:**
-   - Copy structure from exercise
-   - Fill in solutions
-   - Add explanatory comments
-   - **VALIDATION CHECKPOINT**: Run `python validate_notebooks.py solutions/week_XX_topic/week_XX_topic.ipynb --type solution` after every 5 cells
-   - Add 5 cells at a time with approval
+6. **Build SOLUTION notebook AFTER exercise is fully complete + approved:**
+   - **SOLUTION IS A COPY + EDIT OF THE EXERCISE** - do NOT build it in parallel with the exercise
+   - Only start the solution notebook once the user has approved the FINAL exercise notebook
+   - `cp exercises/week_XX_topic/week_XX_topic.ipynb solutions/week_XX_topic/week_XX_topic.ipynb`
+   - Then walk through each lab cell and replace the `= None  # YOUR CODE` placeholders with complete implementations
+   - Remove (do NOT keep) the safety-net cells that follow each lab in the exercise - in the solution the lab IS the solution
+   - Add explanatory comments that explain WHY the solution works
+   - **VALIDATION CHECKPOINT**: Run `python validate_notebooks.py solutions/week_XX_topic/week_XX_topic.ipynb --type solution` after every 5 cells edited
+   - Ask for approval between batches of 5 cells, same rhythm as exercise
 7. **Final verification:**
    - Run comprehensive validation: `python validate_notebooks.py --pair exercises/.../notebook.ipynb solutions/.../notebook.ipynb`
    - Generate requirements.txt: `python validate_notebooks.py exercises/.../notebook.ipynb --requirements`
