@@ -383,6 +383,39 @@ Every SageMaker-week notebook that depends on a Bedrock model or a shared resour
 
 These probes have saved multiple class days. Do not skip.
 
+### Pre-Class Model-Access Verification (di-mfa)
+
+Before finalizing a new week's notebook, verify that EVERY Bedrock model the notebook references has `status == "ACTIVE"` in the `di-mfa` account:
+
+```bash
+AWS_PROFILE=di-mfa aws bedrock get-foundation-model --model-identifier <model-id> --region us-east-1 \
+  --query 'modelDetails.modelLifecycle.status'
+```
+
+If any returns `LEGACY` that is OK for existing weeks (Haiku 3 is LEGACY but still works). If any returns an error or a non-ACTIVE status, the class account doesn't have access. Enable it via the Bedrock console (Model access) BEFORE class.
+
+### MFA Refresh Flow
+
+The `di-mfa` session expires (typically 12 hours). To refresh from a new MFA code:
+
+```bash
+# Interactive form
+bash scripts/aws-mfa-login.sh  # prompts for 6-digit code
+
+# Non-interactive form (script-friendly)
+CREDS=$(aws sts get-session-token \
+  --serial-number "arn:aws:iam::535146832369:mfa/1pass-auth" \
+  --token-code "<6 digit code>" \
+  --profile di \
+  --output json)
+aws configure set aws_access_key_id     $(echo "$CREDS" | jq -r '.Credentials.AccessKeyId')     --profile di-mfa
+aws configure set aws_secret_access_key $(echo "$CREDS" | jq -r '.Credentials.SecretAccessKey') --profile di-mfa
+aws configure set aws_session_token     $(echo "$CREDS" | jq -r '.Credentials.SessionToken')    --profile di-mfa
+AWS_PROFILE=di-mfa aws sts get-caller-identity   # sanity check
+```
+
+The source profile is `di` (long-lived keys). The target profile `di-mfa` is what every AWS call uses.
+
 ### Model IDs (di-mfa AWS account, April 2026)
 
 | Purpose | Model ID | Notes |
@@ -468,8 +501,30 @@ Known validator quirks (ignore these; they are NOT notebook defects):
 - `Missing modules: boto3, sagemaker, strands, strands_tools` - these are in SageMaker Studio, not the local machine.
 - `Cell N: Syntax error at line X` on a `%pip install` cell - the validator's `ast.parse` trips on `%` cell magics; it only skips cells starting with `!`.
 - `No lab cells found` - the validator looks for "Lab" + "YOUR CODE" in the same cell; if labs are titled in a preceding markdown cell (the normal pattern), it doesn't match.
+- `--pair` reports `cell count mismatch` or `type mismatch` when the solution has SAFETY-NETS REMOVED - this is INTENTIONAL per the safety-net rule. Expected: `solution_cells == exercise_cells - len(safety_nets)`. Do not "fix" this by putting safety-nets back into the solution.
 
-The authoritative check is `--pair`. If that PASSES, the notebook structure is correct.
+The authoritative check when safety-nets are in play is the manual verify script (see below), not `--pair`.
+
+### Authoritative Pair Verifier (accounts for safety-nets)
+
+When a week uses safety-net cells, run this check instead of (or in addition to) `--pair`:
+
+```python
+import json, re
+ex = json.load(open('exercises/week_XX_topic/week_XX_topic.ipynb'))
+so = json.load(open('solutions/week_XX_topic/week_XX_topic.ipynb'))
+src = lambda c: ''.join(c['source']) if isinstance(c['source'], list) else c['source']
+
+safety_nets = sum(1 for c in ex['cells'] if 'SAFETY-NET' in src(c))
+assert len(so['cells']) == len(ex['cells']) - safety_nets, \
+    f"Solution should be {len(ex['cells']) - safety_nets} cells, got {len(so['cells'])}"
+assert not any('SAFETY-NET' in src(c) for c in so['cells']), \
+    "Solution must not contain safety-net cells"
+assert not any(re.search(r'^\s*\w+\s*=\s*None\s*#\s*YOUR CODE', src(c), re.MULTILINE)
+               for c in so['cells'] if c['cell_type']=='code' and 'SOLUTION:' in src(c)), \
+    "Solution labs must not contain '= None  # YOUR CODE' placeholders"
+print(f"OK: exercise={len(ex['cells'])} solution={len(so['cells'])} safety_nets={safety_nets}")
+```
 
 ### Upload Convention
 
