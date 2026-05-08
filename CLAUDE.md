@@ -439,7 +439,7 @@ AWS_PROFILE=di-mfa aws sts get-caller-identity   # sanity check
 
 The source profile is `di` (long-lived keys). The target profile `di-mfa` is what every AWS call uses.
 
-### Model IDs (di-mfa AWS account, April 2026)
+### Model IDs (di-mfa AWS account, May 2026)
 
 | Purpose | Model ID | Notes |
 |---------|----------|-------|
@@ -447,21 +447,46 @@ The source profile is `di` (long-lived keys). The target profile `di-mfa` is wha
 | Embeddings (Weeks 17+) | `amazon.titan-embed-text-v2:0` | 1024 dim, FLOAT32 |
 | Reranker (Week 18+, us-east-1) | `cohere.rerank-v3-5:0` | Amazon Rerank 1.0 is NOT in us-east-1 |
 
+### SageMaker SDK Version Rule
+
+**ALWAYS pin `sagemaker==2.x`. NEVER use sagemaker v3.**
+
+SageMaker SDK v3.0 (released Nov 2025) changed `sagemaker/__init__.py` to a bare
+namespace shim with zero exports. `from sagemaker import get_execution_role` raises
+`ImportError` on v3. The function moved to
+`sagemaker.core.helper.session_helper.get_execution_role` - a completely different path.
+
+All Week 15-18 notebooks use `from sagemaker import get_execution_role`. They will
+silently break if pip resolves to sagemaker>=3.
+
+Pin: `sagemaker==2.257.3` (latest stable v2.x, verified May 2026).
+
+Verified by grepping GitHub source:
+- v2.257.3 `src/sagemaker/__init__.py` line 61: `from sagemaker.session import get_execution_role`
+- v3.10.0 `sagemaker-core/src/sagemaker/__init__.py`: namespace shim only
+
 ### Library Pins (FAISS-inclusive Weeks)
 
 ```python
 %pip install -q \
+    "sagemaker==2.257.3" \
     "strands-agents>=1.37,<2" \
     "strands-agents-tools[mem0-memory]>=0.2" \
     "boto3>=1.35" \
-    "faiss-cpu>=1.8,<2" \
+    "faiss-cpu>=1.9,<2" \
     "rank_bm25>=0.2.2" \
-    "opensearch-py>=2.4" \
-    "numpy<2"
+    "opensearch-py>=2.4"
 ```
 
-- `numpy<2` is MANDATORY. FAISS breaks on numpy 2.x.
-- Use `strands-agents-tools[mem0-memory]` (with the extra) - the `mem0_memory` tool has a hard import of `opensearch-py` at module level.
+- `sagemaker==2.257.3`: pin to v2.x. v3 breaks `from sagemaker import get_execution_role`.
+- `faiss-cpu>=1.9,<2`: faiss-cpu 1.9.0+ was recompiled with numpy 2.x support.
+  Its runtime dep is `numpy>=1.25.0,<3.0`. numpy 2.x works fine. Do NOT pin numpy<2.
+  Only faiss-cpu<1.9 needed numpy<2 (it was compiled with numpy 1.x).
+  Verified by reading pyproject.toml at v1.8.0 and v1.9.0 git tags on faiss-wheels repo.
+- Do NOT add `numpy<2`. It is no longer needed and will conflict with libraries that
+  require numpy 2.x.
+- Use `strands-agents-tools[mem0-memory]` (with the extra) - the `mem0_memory` tool has
+  a hard import of `opensearch-py` at module level.
 - Import `strands_tools` BEFORE any direct `import faiss` to avoid kernel segfaults.
 
 ### Lab Safety-Net Cells (Required When Lab Output is Used Later)
