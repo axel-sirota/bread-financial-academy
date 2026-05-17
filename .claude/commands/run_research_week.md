@@ -351,3 +351,13 @@ Once the plan file is written, end your turn with:
 > Next step: run `/build-week-notebook <N> <environment>` to generate the exercise and solution notebooks from this plan. The builder will read this file and produce cells incrementally (5 at a time, with your approval between batches).
 
 Do not offer to run `/build-week-notebook` yourself. That is the user's call.
+
+---
+
+## Notebook Edit Protocol (awareness)
+
+If this skill ends up editing notebook cells (not just reading them), follow
+the canonical procedure in `~/.claude/NOTEBOOK_EDIT_PROTOCOL.md`: normalize
+cell ids, size-gate the mechanism, locate cells by id + content, read back and
+assert after every edit, and run the structural + static code gates. Blind
+bulk index-based rewrites are forbidden.

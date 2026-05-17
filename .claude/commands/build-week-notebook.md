@@ -612,3 +612,23 @@ NotebookEdit(
 3. Wait for my approval
 4. Start building incrementally (5 cells at a time)
 5. **REMEMBER**: Always use `cell_id` parameter to insert cells in correct order!
+
+---
+
+## Notebook Edit Protocol (MANDATORY)
+
+This skill edits Jupyter notebook cells. Before any cell edit, insert, or
+delete, you MUST follow the canonical procedure in
+`~/.claude/NOTEBOOK_EDIT_PROTOCOL.md`. In short:
+
+- Normalize cell ids first (`nbformat.normalize`) so every cell has an id.
+- Pick the mechanism by size: `NotebookEdit` only if the notebook fits the
+  Read limit (~25k tokens); otherwise a targeted, audited in-place JSON edit.
+- Locate every cell by id AND by asserting its current content.
+- Control insert position explicitly - never trust append/insert order.
+- After every edit: read back from disk and assert the cell content.
+- Run the structural gate (`nbformat.validate`) and the static code gate
+  (`ast.parse` + `pyflakes` on all code cells concatenated in order).
+
+Blind bulk scripts that rewrite cells by index are forbidden. Read the full
+protocol file before editing.
