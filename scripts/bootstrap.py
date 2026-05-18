@@ -60,11 +60,16 @@ SHARED_ENDPOINT_NAME = "fraud-classifier-endpoint"
 
 BEDROCK_MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
-# HuggingFace Deep Learning Container versions - verified available in the
-# datacouch us-west-2 ECR (the registry the failed smoke jobs pulled from).
-HF_TRANSFORMERS_VERSION = "4.56.2"
-HF_PYTORCH_VERSION = "2.8.0"
-HF_PY_VERSION = "py312"
+# HuggingFace Deep Learning Container versions.
+# HF 4.49.0 is the newest version supported by sagemaker==2.257.3 for BOTH
+# training AND inference scopes. Newer HF (4.55, 4.56) exists as a training
+# DLC but NOT as an inference DLC in this SDK - so HuggingFaceModel.register()
+# and .deploy() reject it. Train and inference use different pytorch bases.
+HF_TRANSFORMERS_VERSION = "4.49.0"
+HF_TRAIN_PYTORCH_VERSION = "2.5.1"
+HF_TRAIN_PY_VERSION = "py311"
+HF_INFER_PYTORCH_VERSION = "2.6.0"
+HF_INFER_PY_VERSION = "py312"
 
 TRAIN_INSTANCE = "ml.g4dn.xlarge"
 ENDPOINT_INSTANCE = "ml.m5.xlarge"
@@ -172,34 +177,36 @@ def databricks_config():
 
 
 def databricks_query(host, token, warehouse_id, sql):
-    """Run a SQL statement on a Databricks SQL warehouse, return list of rows
-    (each row a list of strings). Polls until the statement finishes."""
-    import urllib.request
+    """Run a SQL statement on a Databricks SQL warehouse, return all rows
+    (each row a list of strings). Uses requests for robust chunked-transfer
+    handling, polls until the statement finishes, and pages through every
+    result chunk (the Statement Execution API splits large results)."""
+    import requests
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
 
     def _post(path, body):
-        req = urllib.request.Request(
-            f"{host}{path}",
-            data=json.dumps(body).encode(),
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return json.loads(r.read())
+        r = requests.post(f"{host}{path}", headers=headers, json=body, timeout=120)
+        r.raise_for_status()
+        return r.json()
 
     def _get(path):
-        req = urllib.request.Request(
-            f"{host}{path}",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return json.loads(r.read())
+        r = requests.get(f"{host}{path}", headers=headers, timeout=120)
+        r.raise_for_status()
+        return r.json()
 
     resp = _post(
         "/api/2.0/sql/statements",
-        {"warehouse_id": warehouse_id, "statement": sql, "wait_timeout": "30s"},
+        {
+            "warehouse_id": warehouse_id,
+            "statement": sql,
+            "wait_timeout": "30s",
+            "disposition": "INLINE",
+            "format": "JSON_ARRAY",
+        },
     )
     statement_id = resp["statement_id"]
     state = resp["status"]["state"]
@@ -209,26 +216,34 @@ def databricks_query(host, token, warehouse_id, sql):
         state = resp["status"]["state"]
     if state != "SUCCEEDED":
         fail(f"Databricks SQL failed ({state}): {resp.get('status')}")
-    return resp.get("result", {}).get("data_array", []) or []
+
+    # Collect chunk 0, then follow next_chunk_index until exhausted.
+    result = resp.get("result", {}) or {}
+    rows = list(result.get("data_array", []) or [])
+    next_idx = result.get("next_chunk_index")
+    while next_idx is not None:
+        chunk = _get(
+            f"/api/2.0/sql/statements/{statement_id}/result/chunks/{next_idx}"
+        )
+        rows.extend(chunk.get("data_array", []) or [])
+        next_idx = chunk.get("next_chunk_index")
+    return rows
 
 
 def databricks_put_secret(host, token, scope, key, value):
     """Idempotent secret write into a Databricks scope via REST."""
-    import urllib.request
+    import requests
 
-    req = urllib.request.Request(
+    r = requests.post(
         f"{host}/api/2.0/secrets/put",
-        data=json.dumps(
-            {"scope": scope, "key": key, "string_value": value}
-        ).encode(),
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         },
-        method="POST",
+        json={"scope": scope, "key": key, "string_value": value},
+        timeout=30,
     )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        r.read()
+    r.raise_for_status()
 
 
 # ---------------------------------------------------------------------------
@@ -321,8 +336,8 @@ def train_model(session, train_s3_uri):
         instance_type=TRAIN_INSTANCE,
         instance_count=1,
         transformers_version=HF_TRANSFORMERS_VERSION,
-        pytorch_version=HF_PYTORCH_VERSION,
-        py_version=HF_PY_VERSION,
+        pytorch_version=HF_TRAIN_PYTORCH_VERSION,
+        py_version=HF_TRAIN_PY_VERSION,
         hyperparameters={
             "epochs": 1,
             "batch_size": 16,
@@ -356,15 +371,20 @@ def register_model(session, estimator):
             ModelPackageGroupDescription="Bread Financial fraud classifier",
         )
         log(f"registry: created group {MODEL_PACKAGE_GROUP}")
-    except sm.exceptions.ResourceInUse:
-        log(f"registry: group {MODEL_PACKAGE_GROUP} already exists")
+    except sm.exceptions.ClientError as e:
+        # CreateModelPackageGroup raises a generic ValidationException (not a
+        # typed ResourceInUse) when the group already exists - keep idempotent.
+        if "already exists" in str(e):
+            log(f"registry: group {MODEL_PACKAGE_GROUP} already exists")
+        else:
+            raise
 
     model = HuggingFaceModel(
         model_data=estimator.model_data,
         role=EXEC_ROLE_ARN,
         transformers_version=HF_TRANSFORMERS_VERSION,
-        pytorch_version=HF_PYTORCH_VERSION,
-        py_version=HF_PY_VERSION,
+        pytorch_version=HF_INFER_PYTORCH_VERSION,
+        py_version=HF_INFER_PY_VERSION,
         sagemaker_session=sm_session,
     )
     package = model.register(
@@ -408,10 +428,29 @@ def deploy_shared_endpoint(session, model):
 # Step 6 - Write class-wide Databricks secrets into aws-course-shared.
 # ---------------------------------------------------------------------------
 
+def load_dotenv():
+    """Read repo-root .env into a dict. Returns {} if absent. Values may be
+    quoted; quotes are stripped. .env is gitignored - secrets stay local."""
+    path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"
+    )
+    env = {}
+    if not os.path.exists(path):
+        return env
+    for line in open(path):
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        env[key.strip()] = value.strip().strip('"').strip("'")
+    return env
+
+
 def write_shared_secrets(host, token):
     """Write the class-wide keys whose values bootstrap knows. Langfuse keys
-    are NOT invented here - they are prompted for, and skipped if left blank
-    (the Week 20 Langfuse part is optional)."""
+    are read from the repo-root .env (LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY,
+    LANGFUSE_BASE_URL); missing ones are skipped (Week 20 Part 1 is optional).
+    Secret values are never fabricated."""
     known = {
         "aws-region": AWS_REGION,
         "sagemaker-execution-role-arn": EXEC_ROLE_ARN,
@@ -422,15 +461,19 @@ def write_shared_secrets(host, token):
         databricks_put_secret(host, token, DATABRICKS_SHARED_SCOPE, key, value)
         log(f"secret: set {DATABRICKS_SHARED_SCOPE}/{key}")
 
-    # Langfuse keys - prompt, never fabricate. Blank input skips the key.
-    log("Langfuse keys (Week 20 Part 1 observability) - leave blank to skip:")
-    for key in ("langfuse-public-key", "langfuse-secret-key", "langfuse-host"):
-        value = input(f"  {key}: ").strip()
+    # Langfuse keys from .env. Map the .env var names to the secret-scope keys.
+    env = load_dotenv()
+    langfuse_map = {
+        "langfuse-public-key": env.get("LANGFUSE_PUBLIC_KEY", ""),
+        "langfuse-secret-key": env.get("LANGFUSE_SECRET_KEY", ""),
+        "langfuse-host": env.get("LANGFUSE_BASE_URL", ""),
+    }
+    for key, value in langfuse_map.items():
         if value:
             databricks_put_secret(host, token, DATABRICKS_SHARED_SCOPE, key, value)
             log(f"secret: set {DATABRICKS_SHARED_SCOPE}/{key}")
         else:
-            log(f"secret: skipped {key} (left blank)")
+            log(f"secret: skipped {key} (not in .env)")
 
 
 # ---------------------------------------------------------------------------
