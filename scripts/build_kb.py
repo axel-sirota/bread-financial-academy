@@ -215,9 +215,13 @@ def ensure_kb_role(session):
 # Step 3 - S3 Vectors store (vector bucket + index).
 # ---------------------------------------------------------------------------
 
-def ensure_vector_store(session):
+def ensure_vector_store(session, recreate_index=False):
     """Create the S3 Vectors vector bucket and index. Returns (bucket_arn,
-    index_arn). Idempotent - tolerates already-exists."""
+    index_arn). Idempotent - tolerates already-exists.
+
+    recreate_index=True deletes an existing index first. metadataConfiguration
+    (the non-filterable keys) is fixed at index creation and cannot be altered,
+    so an index made without it must be recreated."""
     s3v = session.client("s3vectors")
 
     try:
@@ -229,13 +233,35 @@ def ensure_vector_store(session):
         else:
             raise
 
+    if recreate_index:
+        try:
+            s3v.delete_index(
+                vectorBucketName=VECTOR_BUCKET, indexName=VECTOR_INDEX
+            )
+            log(f"deleted existing index {VECTOR_INDEX} for recreate")
+        except Exception as e:
+            if "NotFoundException" in type(e).__name__ or "not found" in str(e).lower():
+                log(f"no existing index {VECTOR_INDEX} to delete")
+            else:
+                raise
+
     try:
+        # AMAZON_BEDROCK_TEXT / AMAZON_BEDROCK_METADATA MUST be declared
+        # non-filterable: Bedrock stores the full chunk text under
+        # AMAZON_BEDROCK_TEXT, and S3 Vectors caps FILTERABLE metadata at
+        # 2048 bytes. Without this, ingestion fails on every chunk over 2KB.
         s3v.create_index(
             vectorBucketName=VECTOR_BUCKET,
             indexName=VECTOR_INDEX,
             dataType="float32",
             dimension=EMBEDDING_DIM,
             distanceMetric="cosine",
+            metadataConfiguration={
+                "nonFilterableMetadataKeys": [
+                    "AMAZON_BEDROCK_TEXT",
+                    "AMAZON_BEDROCK_METADATA",
+                ]
+            },
         )
         log(f"created vector index {VECTOR_INDEX}")
     except Exception as e:
@@ -361,6 +387,10 @@ def main():
     parser = argparse.ArgumentParser(description="Build the course Bedrock KB")
     parser.add_argument("--check-only", action="store_true",
                         help="verify prerequisites and exit, build nothing")
+    parser.add_argument("--recreate-index", action="store_true",
+                        help="delete and recreate the S3 Vectors index "
+                             "(needed if it was created without the "
+                             "non-filterable metadata keys)")
     args = parser.parse_args()
 
     session = aws_session()
@@ -376,7 +406,7 @@ def main():
     corpus_uri = upload_corpus(session)
 
     log("=== Step 3: S3 Vectors store ===")
-    _, index_arn = ensure_vector_store(session)
+    _, index_arn = ensure_vector_store(session, recreate_index=args.recreate_index)
 
     log("=== Step 4: KB service role ===")
     role_arn = ensure_kb_role(session)
