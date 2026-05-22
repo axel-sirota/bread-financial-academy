@@ -32,6 +32,7 @@ Run by the instructor only; students never run this.
 
 import argparse
 import configparser
+import csv
 import io
 import json
 import os
@@ -627,6 +628,81 @@ def build_baseline_csv(host, token, warehouse_id, session):
 
 
 # ---------------------------------------------------------------------------
+# Step 6.6 - Stage Week 21 lab input CSV.
+# ---------------------------------------------------------------------------
+#
+# Every Week 21 lab DAG reads lab-inputs/fraud_sample_500.csv from
+# bread-academy-shared - pull_batch slices it and the scorer reads the
+# `narrative` column. We stage a 500-row sample here so the labs have real
+# data to score.
+
+W21_LAB_INPUT_KEY = "lab-inputs/fraud_sample_500.csv"
+
+
+def stage_w21_assets(host, token, warehouse_id, session):
+    """Idempotently stage the Week 21 lab input CSV. 500 real rows with the
+    columns the lab DAGs consume: transaction_id, narrative, amount, is_fraud."""
+    s3 = session.client("s3")
+    try:
+        s3.head_object(Bucket=S3_BUCKET, Key=W21_LAB_INPUT_KEY)
+        log(f"w21: s3://{S3_BUCKET}/{W21_LAB_INPUT_KEY} already exists - skip")
+        return
+    except Exception:
+        pass
+
+    cols = ["transaction_id", "narrative", "amount", "is_fraud"]
+    rows = databricks_query(
+        host, token, warehouse_id,
+        f"SELECT {', '.join(cols)} FROM {SOURCE_TABLE} TABLESAMPLE (500 ROWS)")
+    if not rows:
+        fail("w21 lab-input query returned no rows")
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(cols)
+    for row in rows:
+        w.writerow(["" if c is None else c for c in row])
+    s3.put_object(
+        Bucket=S3_BUCKET, Key=W21_LAB_INPUT_KEY,
+        Body=buf.getvalue().encode("utf-8"))
+    log(f"w21: {len(rows)} rows -> s3://{S3_BUCKET}/{W21_LAB_INPUT_KEY}")
+
+
+# ---------------------------------------------------------------------------
+# Step 6.7 - Ensure the SageMaker Model resource for the Week 21 Lab 5
+# SageMakerTransformOperator (it needs a Model resource, not an endpoint).
+# ---------------------------------------------------------------------------
+
+TRANSFORM_MODEL_NAME = "fraud-classifier-week19-model"
+
+
+def ensure_transform_model(session):
+    """Idempotently create a SageMaker Model resource named
+    fraud-classifier-week19-model from the latest model package. Week 21
+    Lab 5's SageMakerTransformOperator references this Model by name."""
+    sm = session.client("sagemaker")
+    try:
+        sm.describe_model(ModelName=TRANSFORM_MODEL_NAME)
+        log(f"w21: Model {TRANSFORM_MODEL_NAME} already exists - skip")
+        return
+    except sm.exceptions.ClientError:
+        pass
+
+    pkgs = sm.list_model_packages(
+        ModelPackageGroupName=MODEL_PACKAGE_GROUP,
+        SortBy="CreationTime", SortOrder="Descending", MaxResults=1,
+    ).get("ModelPackageSummaryList", [])
+    if not pkgs:
+        fail(f"no model package in {MODEL_PACKAGE_GROUP} to build a Model from")
+    pkg_arn = pkgs[0]["ModelPackageArn"]
+    sm.create_model(
+        ModelName=TRANSFORM_MODEL_NAME,
+        ExecutionRoleArn=EXEC_ROLE_ARN,
+        Containers=[{"ModelPackageName": pkg_arn}],
+    )
+    log(f"w21: created Model {TRANSFORM_MODEL_NAME} from {pkg_arn}")
+
+
+# ---------------------------------------------------------------------------
 # Step 6.5 - Stage Week 22 pre-flight assets.
 # ---------------------------------------------------------------------------
 #
@@ -813,6 +889,12 @@ def main():
 
     log("=== Step 6.5: stage Week 22 pre-flight assets ===")
     stage_w22_assets(session)
+
+    log("=== Step 6.6: stage Week 21 lab input CSV ===")
+    stage_w21_assets(host, token, args.warehouse_id, session)
+
+    log("=== Step 6.7: ensure Week 21 Transform Model resource ===")
+    ensure_transform_model(session)
 
     log("=== Step 7: write class-wide secret values ===")
     write_secrets(host, token, kb_id)
