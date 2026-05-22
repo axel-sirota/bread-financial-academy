@@ -56,7 +56,20 @@ PRETRAINED_PREFIX = "pretrained"
 PRETRAINED_MODEL_KEY = f"{PRETRAINED_PREFIX}/training-output"  # estimator output_path
 TRAIN_DATA_KEY = "instructor-setup/train/train.csv"
 MODEL_PACKAGE_GROUP = "fraud-classifier-week19"
-ENDPOINT_NAME = "fraud-classifier-endpoint"
+# One endpoint per cohort (3 cohorts of 22). The Week 20 Databricks notebook
+# derives its cohort from the student number and resolves the matching name:
+#   fraud-classifier-endpoint-cohort-1 / -2 / -3
+# This spreads 60 students across 3 endpoints so a class never contends on
+# one, and removes the shared-endpoint update_endpoint race entirely.
+COHORTS = [1, 2, 3]
+ENDPOINT_NAME_BASE = "fraud-classifier-endpoint-cohort"
+
+
+def endpoint_name(cohort):
+    """Per-cohort endpoint name. Cohort is 1, 2, or 3."""
+    return f"{ENDPOINT_NAME_BASE}-{cohort}"
+
+
 TRAIN_INSTANCE = "ml.g4dn.xlarge"
 ENDPOINT_INSTANCE = "ml.m5.xlarge"
 
@@ -398,27 +411,47 @@ def register_model(session, model_data):
 # ---------------------------------------------------------------------------
 
 def deploy_endpoint(session, model):
-    """Deploy fraud-classifier-endpoint. If it already exists, leave it -
-    the Week 20 notebook updates it with data capture itself. Only create
-    when absent. Never delete (delete causes downtime)."""
-    sm = session.client("sagemaker")
-    try:
-        r = sm.describe_endpoint(EndpointName=ENDPOINT_NAME)
-        log(f"endpoint: {ENDPOINT_NAME} already exists ({r['EndpointStatus']}) "
-            "- leaving in place")
-        return
-    except sm.exceptions.ClientError:
-        log(f"endpoint: {ENDPOINT_NAME} not found - deploying fresh")
+    """Deploy one fraud-classifier endpoint per cohort, each WITH SageMaker
+    data capture enabled at deploy time. Enabling capture here (instead of
+    in the student notebook) means no student ever calls update_endpoint -
+    the Week 20 'cannot update in-progress endpoint' race cannot happen.
 
-    model.deploy(
-        initial_instance_count=1,
-        instance_type=ENDPOINT_INSTANCE,
-        endpoint_name=ENDPOINT_NAME,
-    )
-    status = sm.describe_endpoint(EndpointName=ENDPOINT_NAME)["EndpointStatus"]
-    log(f"endpoint: {ENDPOINT_NAME} status {status}")
-    if status != "InService":
-        fail(f"endpoint did not reach InService (got {status})")
+    Idempotent: an endpoint that already exists is left in place. Never
+    deletes (delete causes downtime)."""
+    from sagemaker.model_monitor import DataCaptureConfig
+
+    sm = session.client("sagemaker")
+    for cohort in COHORTS:
+        name = endpoint_name(cohort)
+        try:
+            r = sm.describe_endpoint(EndpointName=name)
+            log(f"endpoint: {name} already exists ({r['EndpointStatus']}) "
+                "- leaving in place")
+            continue
+        except sm.exceptions.ClientError:
+            log(f"endpoint: {name} not found - deploying fresh with capture")
+
+        # Data capture lands per cohort so the Week 20 Model Monitor lab
+        # reads its own cohort's traffic.
+        capture_uri = (
+            f"s3://{S3_BUCKET}/fraud-classifier/data-capture/cohort-{cohort}"
+        )
+        capture_cfg = DataCaptureConfig(
+            enable_capture=True,
+            sampling_percentage=100,
+            destination_s3_uri=capture_uri,
+            capture_options=["REQUEST", "RESPONSE"],
+        )
+        model.deploy(
+            initial_instance_count=1,
+            instance_type=ENDPOINT_INSTANCE,
+            endpoint_name=name,
+            data_capture_config=capture_cfg,
+        )
+        status = sm.describe_endpoint(EndpointName=name)["EndpointStatus"]
+        log(f"endpoint: {name} status {status}  capture -> {capture_uri}")
+        if status != "InService":
+            fail(f"endpoint {name} did not reach InService (got {status})")
 
 
 # ---------------------------------------------------------------------------
@@ -688,11 +721,16 @@ def stage_w22_assets(session):
 def write_secrets(host, token, kb_id):
     """Write the class-wide secret values. The scope is terraform-owned;
     this only puts values. Langfuse keys come from the repo .env."""
+    # Endpoints are now per cohort; the Week 20 notebook derives its own
+    # name as f"{endpoint-name-base}-{cohort}". We publish the BASE so the
+    # notebook never hardcodes it. The legacy "shared-endpoint-name" key is
+    # kept pointing at cohort 1 for any older notebook that still reads it.
     known = {
         "aws-region": AWS_REGION,
         "sagemaker-execution-role-arn": EXEC_ROLE_ARN,
         "course-s3-bucket": S3_BUCKET,
-        "shared-endpoint-name": ENDPOINT_NAME,
+        "endpoint-name-base": ENDPOINT_NAME_BASE,
+        "shared-endpoint-name": endpoint_name(1),
         "knowledge-base-id": kb_id,
     }
     for k, v in known.items():
@@ -780,7 +818,7 @@ def main():
     write_secrets(host, token, kb_id)
 
     log("=== AWS-side instructor setup complete ===")
-    log(f"  endpoint        : {ENDPOINT_NAME}")
+    log(f"  endpoints       : {', '.join(endpoint_name(c) for c in COHORTS)}")
     log(f"  model registry  : {MODEL_PACKAGE_GROUP}")
     log(f"  knowledge base  : {KB_NAME} ({kb_id})")
     log(f"  baseline CSV    : s3://{S3_BUCKET}/{BASELINE_KEY}")
