@@ -22,7 +22,7 @@ AWS_REGION = sess.boto_region_name
 os.environ["AWS_REGION"]         = AWS_REGION
 os.environ["AWS_DEFAULT_REGION"] = AWS_REGION
 
-MODEL_ID        = "us.anthropic.claude-3-haiku-20240307-v1:0"
+MODEL_ID        = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 EMBED_MODEL_ID  = "amazon.titan-embed-text-v2:0"
 RERANK_MODEL_ID = "cohere.rerank-v3-5:0"
 RERANK_MODEL_ARN = f"arn:aws:bedrock:{AWS_REGION}::foundation-model/{RERANK_MODEL_ID}"

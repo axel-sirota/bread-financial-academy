@@ -594,6 +594,94 @@ def build_baseline_csv(host, token, warehouse_id, session):
 
 
 # ---------------------------------------------------------------------------
+# Step 6.5 - Stage Week 22 pre-flight assets.
+# ---------------------------------------------------------------------------
+#
+# The W22 main notebook (closing-the-loop labs) pre-flight Probe 3 looks for
+# 4 objects under s3://bread-academy-shared/. model.tar.gz is staged
+# separately (Week 19 training output is copied there). The other three are
+# small static files we generate here on every run:
+#
+#   drift-baselines/merchant_country_baseline.json
+#       The W20-saved baseline distribution the W22 drift-detection DAG
+#       compares against. The 4-category split below MUST match the
+#       hardcoded `baseline` dict in the W22 demo cell (id 995d0814).
+#
+#   sample/recent_transactions.csv
+#       1000-row sample of recent transactions used as the "current"
+#       distribution input to PSI. Built with a small forced drift
+#       towards US_CRYPTO so PSI > 0.2 fires the retrain gate when
+#       the lab runs with the default conf.
+#
+#   pretrained/inference_image_uri.txt
+#       Just the ECR URI of the HuggingFace inference container for
+#       the region. Lab 2 reads this to feed CreateModel.
+
+def stage_w22_assets(session):
+    """Idempotently write the 3 small W22 pre-flight assets to S3."""
+    import csv
+    import io as _io
+    import random
+
+    s3 = session.client("s3")
+
+    # 1. drift-baselines/merchant_country_baseline.json
+    baseline = {
+        "US_RETAIL": 0.50,
+        "US_CRYPTO": 0.05,
+        "EU_RETAIL": 0.30,
+        "OTHER":     0.15,
+    }
+    baseline_key = "drift-baselines/merchant_country_baseline.json"
+    s3.put_object(
+        Bucket=S3_BUCKET,
+        Key=baseline_key,
+        Body=json.dumps(baseline, indent=2).encode("utf-8"),
+        ContentType="application/json",
+    )
+    log(f"w22: s3://{S3_BUCKET}/{baseline_key}")
+
+    # 2. sample/recent_transactions.csv - 1000 rows, drifted toward US_CRYPTO
+    # so PSI vs the baseline above is > 0.2 by construction.
+    categories = ["US_RETAIL", "US_CRYPTO", "EU_RETAIL", "OTHER"]
+    drift_weights = [0.35, 0.25, 0.30, 0.10]
+    random.seed(42)
+    buf = _io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["transaction_id", "amount", "merchant_country", "is_fraud"])
+    for i in range(1000):
+        cat = random.choices(categories, weights=drift_weights, k=1)[0]
+        amount = round(random.uniform(5, 5000), 2)
+        is_fraud = 1 if (cat == "US_CRYPTO" and random.random() < 0.18) else 0
+        w.writerow([f"txn_{i:06d}", amount, cat, is_fraud])
+    sample_key = "sample/recent_transactions.csv"
+    s3.put_object(
+        Bucket=S3_BUCKET,
+        Key=sample_key,
+        Body=buf.getvalue().encode("utf-8"),
+        ContentType="text/csv",
+    )
+    log(f"w22: s3://{S3_BUCKET}/{sample_key} (1000 rows, drifted)")
+
+    # 3. pretrained/inference_image_uri.txt - ECR URI for the HuggingFace
+    # inference container in this region. Matches the version pin used by
+    # the W19 endpoint (transformers 4.49.0 / pytorch 2.6.0 / py312 inference).
+    # If the W19 endpoint config changes, update this string too.
+    image_uri = (
+        f"763104351884.dkr.ecr.{AWS_REGION}.amazonaws.com/"
+        "huggingface-pytorch-inference:2.6.0-transformers4.49.0-cpu-py312-ubuntu22.04"
+    )
+    image_key = "pretrained/inference_image_uri.txt"
+    s3.put_object(
+        Bucket=S3_BUCKET,
+        Key=image_key,
+        Body=image_uri.encode("utf-8"),
+        ContentType="text/plain",
+    )
+    log(f"w22: s3://{S3_BUCKET}/{image_key} -> {image_uri[:80]}...")
+
+
+# ---------------------------------------------------------------------------
 # Step 7 - Populate aws-course-shared secret VALUES.
 # ---------------------------------------------------------------------------
 
@@ -684,6 +772,9 @@ def main():
 
     log("=== Step 6: Model Monitor baseline CSV ===")
     build_baseline_csv(host, token, args.warehouse_id, session)
+
+    log("=== Step 6.5: stage Week 22 pre-flight assets ===")
+    stage_w22_assets(session)
 
     log("=== Step 7: write class-wide secret values ===")
     write_secrets(host, token, kb_id)
