@@ -75,8 +75,8 @@ def group_has_package(sm, name):
     return len(resp["ModelPackageSummaryList"]) > 0
 
 
-def seed_one(sm, nn, inf_spec, dry_run):
-    name = GROUP_FMT.format(nn=nn)
+def seed_group(sm, name, desc, inf_spec, dry_run):
+    """Create model package group `name` and seed it with one v1 package."""
     # 1. group
     if group_exists(sm, name):
         print(f"  [{name}] group exists")
@@ -85,10 +85,7 @@ def seed_one(sm, nn, inf_spec, dry_run):
     else:
         sm.create_model_package_group(
             ModelPackageGroupName=name,
-            ModelPackageGroupDescription=(
-                f"Per-student fraud classifier registry (student {nn:02d}), "
-                "Weeks 21-22. Isolated copy of fraud-classifier-week19."
-            ),
+            ModelPackageGroupDescription=desc,
         )
         print(f"  [{name}] group CREATED")
     # 2. seed v1
@@ -107,11 +104,24 @@ def seed_one(sm, nn, inf_spec, dry_run):
     print(f"  [{name}] v1 REGISTERED (PendingManualApproval)")
 
 
+def seed_one(sm, nn, inf_spec, dry_run):
+    seed_group(
+        sm,
+        GROUP_FMT.format(nn=nn),
+        f"Per-student fraud classifier registry (student {nn:02d}), "
+        "Weeks 21-22. Isolated copy of fraud-classifier-week19.",
+        inf_spec,
+        dry_run,
+    )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--students", type=int, nargs="*",
                     help="specific student numbers (default 1..60)")
+    ap.add_argument("--instructor", action="store_true",
+                    help="also seed fraud-classifier-week19-instructor")
     args = ap.parse_args()
 
     sm = boto3.client("sagemaker", region_name=REGION)
@@ -131,6 +141,21 @@ def main():
             print(f"  [student {nn:02d}] ERROR: {type(e).__name__}: {e}")
             failures.append(nn)
         time.sleep(0.1)  # gentle on the API
+
+    if args.instructor:
+        print("\nSeeding instructor group")
+        try:
+            seed_group(
+                sm,
+                "fraud-classifier-week19-instructor",
+                "Instructor fraud classifier registry, Weeks 21-22. Isolated "
+                "copy of fraud-classifier-week19 for instructor demo runs.",
+                inf_spec,
+                args.dry_run,
+            )
+        except Exception as e:  # noqa: BLE001
+            print(f"  [instructor] ERROR: {type(e).__name__}: {e}")
+            failures.append("instructor")
 
     print("\nDONE." if not failures else f"\nDONE with {len(failures)} failures: {failures}")
     sys.exit(1 if failures else 0)
