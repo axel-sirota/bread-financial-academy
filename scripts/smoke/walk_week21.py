@@ -193,16 +193,27 @@ def part_a_instructor_preflight():
     except Exception as e:
         fail(f"put/delete failed: {type(e).__name__}: {e}")
 
-    step(3, "SageMaker fraud-classifier-endpoint is InService")
+    step(3, "At least one fraud-classifier-endpoint-cohort-* is InService")
     sm = session.client("sagemaker")
+    # Week 20 split the single shared endpoint into per-cohort endpoints
+    # fraud-classifier-endpoint-cohort-{1,2,3}. The Week 21/22 notebooks
+    # resolve the right one per student via the endpoint-name-base secret and
+    # cohort math. Here we just assert the cohort endpoints exist and that at
+    # least one is InService.
     try:
-        ep = sm.describe_endpoint(EndpointName="fraud-classifier-endpoint")
-        info(f"status={ep['EndpointStatus']} cfg={ep['EndpointConfigName']}")
-        if ep["EndpointStatus"] != "InService":
-            fail(f"endpoint status {ep['EndpointStatus']}")
-        ok("endpoint InService")
+        resp = sm.list_endpoints(
+            NameContains="fraud-classifier-endpoint-cohort-", MaxResults=10)
+        endpoints = resp.get("Endpoints", [])
+        if not endpoints:
+            fail("no fraud-classifier-endpoint-cohort-* endpoints found")
+        in_service = [e for e in endpoints if e["EndpointStatus"] == "InService"]
+        for e in endpoints:
+            info(f"{e['EndpointName']}: {e['EndpointStatus']}")
+        if not in_service:
+            fail("no cohort endpoint is InService")
+        ok(f"{len(in_service)}/{len(endpoints)} cohort endpoints InService")
     except Exception as e:
-        fail(f"describe_endpoint: {type(e).__name__}: {e}")
+        fail(f"list_endpoints: {type(e).__name__}: {e}")
 
     step(4, "Model package group fraud-classifier-week19 exists")
     try:
