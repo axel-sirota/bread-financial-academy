@@ -1,0 +1,5 @@
+flowchart LR
+    A[pandas frame:<br/>features + label + sex] --> B[BinaryLabelDataset]
+    B --> C[BinaryLabelDatasetMetric]
+    C --> D[disparate_impact<br/>ratio, flag < 0.8]
+    C --> E[statistical_parity_difference<br/>same as Fairlearn DPD]

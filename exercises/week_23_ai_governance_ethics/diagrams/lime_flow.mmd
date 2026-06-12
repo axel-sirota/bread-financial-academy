@@ -1,0 +1,9 @@
+flowchart LR
+    A[One denied applicant] --> B[LIME: perturb features<br/>fit a local surrogate]
+    A --> C[SHAP: exact contributions<br/>main notebook]
+    B --> D[LIME top factors]
+    C --> E[SHAP top factors]
+    D --> F{Agree?}
+    E --> F
+    F -->|Yes| G[Confident reason]
+    F -->|No| H[Investigate before<br/>writing the notice]

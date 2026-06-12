@@ -1,0 +1,6 @@
+flowchart TD
+    A[y_true, y_pred] --> B[MetricFrame]
+    S[sensitive_features = sex] --> B
+    B --> C[selection rate per group]
+    B --> D[accuracy per group]
+    C --> E[demographic_parity_difference<br/>one number: the gap]

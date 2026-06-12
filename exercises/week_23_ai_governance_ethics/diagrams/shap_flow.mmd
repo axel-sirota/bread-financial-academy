@@ -1,0 +1,6 @@
+flowchart LR
+    A[One applicant] --> B[LinearExplainer]
+    M[Trained credit model] --> B
+    B --> C[SHAP value per feature]
+    C --> D[Global: top features overall]
+    C --> E[Local: why THIS person<br/>was denied -> adverse-action notice]

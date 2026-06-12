@@ -1,0 +1,7 @@
+flowchart LR
+    A[Credit model] --> B[Audit fairness<br/>Fairlearn MetricFrame]
+    B --> C{Disparate<br/>impact?}
+    C -->|Yes| D[Mitigate<br/>ThresholdOptimizer]
+    C -->|No| E[Explain decisions<br/>SHAP]
+    D --> E
+    E --> F[Adverse-action notice<br/>ECOA compliant]
