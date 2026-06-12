@@ -48,13 +48,9 @@ hoc work; the model is trained in A and consumed in B through the catalog.
 Standard datacouch auth cell (see `ENVIRONMENT_SETUP.md`) for the Bedrock call.
 Everything else (Spark, Unity Catalog, Feature Engineering, Model Serving) is native
 Databricks - no AWS keys needed for those. Bedrock model for the explanation layer:
-`us.anthropic.claude-sonnet-4-5-20250929-v1:0`.
-
-**Heads-up on permissions:** the stream producer writes events to S3 and Auto Loader
-reads them, which needs the `CourseBucketS3Access` IAM add-on in
-`student_ai_services_policy_ADDITIONS.json`. If the producer's `s3.put_object` returns
-`AccessDenied`, tell your instructor to apply it. (You can also use a DBFS/UC Volume path
-as the Auto Loader source instead of S3 if you prefer to stay fully inside Databricks.)
+`us.anthropic.claude-sonnet-4-5-20250929-v1:0`. Your IAM covers S3 read+write to the
+course buckets, so the stream producer and Auto Loader work as-is. (If you prefer to stay
+fully inside Databricks, a DBFS / UC Volume path also works as the Auto Loader source.)
 
 ---
 

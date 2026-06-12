@@ -47,13 +47,9 @@ days and fire the retrain branch on the drift days.
 ## Setup: auth
 
 Use the standard datacouch auth cell (see `ENVIRONMENT_SETUP.md`); same as Capstone 1.
-You will use S3, Athena, Bedrock, Comprehend, SageMaker, and MWAA. The student policy
-grants Bedrock + SageMaker + CloudWatch + SNS + Airflow; **Comprehend/Textract/
-Translate AND S3 writes need the IAM additions in
-`student_ai_services_policy_ADDITIONS.json`** (`ComprehendNLP` + `CourseBucketS3Access`).
-Reading the daily batches is fine; **writing** outputs/metrics to S3 or **uploading your
-DAG** to the DAGs bucket needs that add-on - if an `s3.put_object` or Comprehend call
-returns `AccessDenied`, tell your instructor to apply it.
+You will use S3, Athena, Bedrock, Comprehend, SageMaker, and MWAA. Your IAM covers all of
+these (Bedrock, SageMaker, CloudWatch, SNS, Airflow, Comprehend, S3 read+write to the
+course buckets) - no extra setup needed.
 
 Bedrock model: `us.anthropic.claude-sonnet-4-5-20250929-v1:0`.
 

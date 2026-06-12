@@ -53,13 +53,8 @@ print("Caller:", session.client("sts").get_caller_identity()["Arn"])
 ```
 
 Model to use for the agent: `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (via `converse`).
-Embeddings for the KB: `amazon.titan-embed-text-v2:0`.
-
-**Heads-up on permissions:** writing to S3 (uploading the `fraud_rules/` corpus, pushing
-a DAG) needs the `CourseBucketS3Access` IAM add-on in
-`student_ai_services_policy_ADDITIONS.json`. If an `s3.upload_file` / `s3.put_object`
-call returns `AccessDenied`, tell your instructor to apply it (or use Option A and skip
-the corpus upload).
+Embeddings for the KB: `amazon.titan-embed-text-v2:0`. Your IAM already covers Bedrock,
+SageMaker, CloudWatch, and S3 writes to the course buckets - no extra setup needed.
 
 ---
 
