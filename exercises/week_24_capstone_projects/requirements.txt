@@ -1,0 +1,6 @@
+# Capstone 1 synthetic data generator (run locally with .venv/bin/python3)
+databricks-sql-connector>=3
+openai>=1.40
+pyarrow>=15
+numpy>=1.25
+pandas>=2.0
