@@ -1,8 +1,9 @@
 # Capstone 3: Databricks Multi-Workspace Analytics Pilot
 
 **Format:** hackathon (light guidance, you drive). **Time:** ~6 hours.
-**Environment:** Azure Databricks (two workspaces / two schemas), Spark MLlib,
-Unity Catalog, Databricks Model Serving, with one Bedrock call per prediction.
+**Environment:** one Azure Databricks workspace, two roles separated by Unity Catalog
+schemas (not two logins), Spark MLlib, Unity Catalog, Databricks Model Serving, with one
+Bedrock call per prediction.
 **Audience:** the data-engineer / data-scientist bridge. Lightest on AI, heaviest
 on cross-team governance.
 
@@ -10,7 +11,13 @@ on cross-team governance.
 
 ## The objective
 
-Simulate two teams sharing one Unity Catalog. You play both:
+Simulate two teams sharing one Unity Catalog. You play both. **You do NOT need two
+literal Databricks workspaces** - the whole pilot runs in the single Azure Databricks
+workspace you already have. "Workspace A" and "Workspace B" are two *roles* you act as,
+separated by Unity Catalog (shared catalog for the model + features, your own
+`student_work` schema for scratch), not by separate logins. Use two notebooks (one per
+role) so the hand-off is clean. See the "Single-workspace vs two-workspace" note below
+before you start.
 
 **Workspace A - the model-owner team:**
 1. **Stream-ingest** synthetic transaction events with Auto Loader into a bronze
@@ -51,6 +58,59 @@ Databricks - no AWS keys needed for those. Bedrock model for the explanation lay
 `us.anthropic.claude-sonnet-4-5-20250929-v1:0`. Your IAM covers S3 read+write to the
 course buckets, so the stream producer and Auto Loader work as-is. (If you prefer to stay
 fully inside Databricks, a DBFS / UC Volume path also works as the Auto Loader source.)
+
+---
+
+## Single-workspace vs two-workspace (read this first)
+
+You have **one** Azure Databricks workspace. That is enough for the entire capstone -
+the "two teams" split is enforced by **Unity Catalog**, which is the actual governance
+lesson:
+
+- **Shared, governed objects** (the catalog) = the model and feature tables both teams
+  agree on. They live under `bread_academy` and are addressed by their **three-level
+  name** `catalog.schema.object`, so any notebook in the workspace can reach them by
+  name - that *is* the cross-team contract.
+- **Per-team scratch** = `bread_academy.student_work.*`, where each role writes its own
+  working tables.
+
+So run it as **two notebooks** in the one workspace:
+
+| Notebook | Plays | Writes to |
+|---|---|---|
+| `capstone3_owner` (role A) | model-owner team | bronze/silver feature tables + registers `...student_work.credit_risk_<NN>` to UC |
+| `capstone3_consumer` (role B) | analytics team | reads the UC model by name, writes `...student_work.gold_scored_<NN>` |
+
+The only place the brief mentions a *second* workspace host is the serving-endpoint
+invoke. In one workspace that call is **same-workspace** (host = your own workspace), and
+you can also skip the REST call entirely by loading the registered model straight from UC
+(see "Consumer" below). The genuine two-workspace REST variant is kept as an optional note
+for anyone who has a second workspace - it is NOT required to be "done".
+
+## Where the data lives and how to access it (multi-workspace contract)
+
+Everything is addressed by Unity Catalog three-level names. Nothing is workspace-local.
+
+| What | Three-level name (read from ANY notebook) | Access |
+|---|---|---|
+| Customer credit history (target) | `bread_academy.course_data.customer_credit_history` | read-only |
+| Macro context (FRED) | `bread_academy.course_data.macro_context` | read-only |
+| Your bronze/silver/gold tables | `bread_academy.student_work.<your_table>_<NN>` | read + write (yours) |
+| Registered model | `bread_academy.student_work.credit_risk_<NN>` (UC model) | register in A, load in B |
+| Stream landing (S3) | `s3://bread-academy-shared/capstone3/stream/student_<NN>/` | read + write (yours) |
+
+```python
+# Role A or B - the read is identical; UC resolves the name, no workspace path needed.
+credit = spark.read.table("bread_academy.course_data.customer_credit_history")
+macro  = spark.read.table("bread_academy.course_data.macro_context")
+
+# Confirm what you can see + your write target exists (governance sanity check):
+spark.sql("SHOW TABLES IN bread_academy.course_data").show()        # shared, read-only
+spark.sql("SHOW TABLES IN bread_academy.student_work").show()       # your scratch (read+write)
+```
+
+If a `SELECT` on `course_data` fails with a permission error, that is the governance
+boundary working - you only have `SELECT` there; write to `student_work` instead.
 
 ---
 
@@ -165,26 +225,46 @@ Serving** endpoint from that registered version (UI or the serving API).
 
 ---
 
-## Consumer + Bedrock explanation (Workspace B)
+## Consumer + Bedrock explanation (role B - same workspace)
 
-Call the endpoint, get a score + top-k feature contributions, then ask Claude Sonnet
-4.5 for a plain-English reason a customer would understand.
+Acting as the consumer team, get a score + top-k feature contributions, then ask Claude
+Sonnet 4.5 for a plain-English reason a customer would understand. You are still in the
+one workspace, so there are two clean ways to score - pick whichever you got working:
 
-**Hint - calling the serving endpoint cross-workspace.** From Workspace B you hit the
-serving REST API of the workspace that owns the model, with a PAT for that workspace.
-The host + path + auth header are the part people thrash on:
+**Route 1 (simplest - load the UC model directly, no endpoint needed).** Because the
+model is registered in Unity Catalog, the consumer notebook can load it by its
+three-level name and score in-process. This is the recommended single-workspace path:
+
+```python
+import mlflow
+mlflow.set_registry_uri("databricks-uc")
+# load the latest version (or pin "/<version>") by its UC three-level name
+model = mlflow.spark.load_model("models:/bread_academy.student_work.credit_risk_<NN>@champion")
+scored = model.transform(features_df)   # adds prediction + probability columns
+```
+
+**Route 2 (the serving endpoint, same-workspace REST).** If you deployed a Model Serving
+endpoint, call it. In ONE workspace the host is your *own* workspace and the token comes
+from the running notebook - no second-workspace PAT to manage:
 
 ```python
 import requests
-HOST = "https://<workspace-A-host>.azuredatabricks.net"   # the OWNER workspace
+# your own workspace host + a notebook-scoped token (no hardcoded PAT)
+ctx   = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
+HOST  = "https://" + ctx.browserHostName().get()
+TOKEN = ctx.apiToken().get()
 ENDPOINT = "credit_risk_<NN>"
 r = requests.post(
     f"{HOST}/serving-endpoints/{ENDPOINT}/invocations",
-    headers={"Authorization": f"Bearer {WORKSPACE_A_PAT}",   # secret-scope it
-             "Content-Type": "application/json"},
+    headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
     json={"dataframe_records": [feature_row_dict]})           # one row of features
 score = r.json()["predictions"][0]
 ```
+
+**Optional - genuine two-workspace variant.** Only if you actually have a second
+workspace: point `HOST` at the OWNER workspace and use a PAT for *that* workspace
+(secret-scope it, never hardcode). The model is reachable either way because it lives in
+the shared catalog, not in a workspace - that is the governance point.
 
 **Hint - top-k feature contributions from Spark MLlib.** MLlib has no per-prediction
 explainer. Two workable routes: (a) global importances from the tree model, or (b)
@@ -211,7 +291,7 @@ resp = br.converse(modelId="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
 print(resp["output"]["message"]["content"][0]["text"])
 ```
 
-Write the gold scored table (Workspace B `student_work` schema):
+Write the gold scored table (role B, your `student_work` schema):
 
 ```
 event_id, customer_id, prediction_score, prediction_label,
@@ -229,10 +309,10 @@ distribution, and a sample of explanations.
 - [ ] Auto Loader stream from the producer -> bronze Delta table.
 - [ ] Silver feature table via point-in-time joins (stream + credit + macro).
 - [ ] MLlib model (LogReg vs GBT compared) registered to Unity Catalog with a version.
-- [ ] Live Model Serving endpoint.
-- [ ] Workspace B consumer: score + Bedrock explanation per prediction.
+- [ ] Live Model Serving endpoint (or load the UC model directly - either counts).
+- [ ] Consumer role (role B): score + Bedrock explanation per prediction.
 - [ ] Gold scored-predictions Delta table.
-- [ ] Databricks SQL dashboard across both workspaces.
+- [ ] Databricks SQL dashboard summarizing the flow across both roles.
 
 This is a hackathon - get the stream -> features -> model -> endpoint path working
 first, then add the Bedrock explanations and the dashboard. Use your own
