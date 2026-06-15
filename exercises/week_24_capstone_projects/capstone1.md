@@ -22,7 +22,7 @@ The agent picks its own tool sequence. That is the point. A fixed script is not 
 **Minimum to "done":**
 - A SageMaker real-time endpoint serving a fraud model you trained.
 - A Bedrock Knowledge Base built from the fraud-rules corpus, retrieval validated.
-- An agent loop (Bedrock Agents or LangGraph) wiring classifier + KB + customer lookup as tools.
+- An agent loop (Strands, like Week 16, or LangGraph) wiring classifier + KB + customer lookup as tools.
 - A structured report for each high-risk transaction in a sample batch.
 
 **Stretch:** use the MWAA Airflow environment (see bottom) to orchestrate the batch run as a DAG.
@@ -180,27 +180,54 @@ Single agent loop. Expose four tools and let the model choose the sequence:
 | `get_customer_profile` | read one row from `customers` |
 | `generate_report` | structured investigation report (JSON) |
 
-Build it with **Bedrock Agents** (action groups) or **LangGraph** (`langchain-aws`,
-`langgraph` are pre-installed on the cluster). Drive the model with the Claude Sonnet 4.5
-inference profile.
+**Build the agent in code, the way you did in Week 16** - this is a build exercise, not
+a deploy exercise. Use **Strands** (Week 16 Lab 1 was literally "build a fraud agent with
+Strands") or **LangGraph** (Week 15). Both are pre-installed on the cluster
+(`strands-agents`, `langgraph`, `langchain-aws`). Each of the four tools is just a
+decorated Python function; you hand the model the tool list and it picks the sequence.
+Drive it with the Claude Sonnet 4.5 inference profile.
 
-**Hint - Bedrock Agents action-group shape (if you go the Agents route).** Each tool is
-an action group backed by an OpenAPI-ish function schema; the agent calls back with a
-`returnControl` event you fulfil. The fiddly part is the schema + the invoke loop:
+**Hint - the Strands shape (same as Week 16).** A `@tool` per capability, then one
+`Agent(model, tools=[...])`; call the agent with a prompt and it chooses which tools to
+run:
 
 ```python
-ba = boto3.Session(region_name="us-west-2").client("bedrock-agent")
-# one action group per tool; functionSchema describes the callable
-ba.create_agent_action_group(
-    agentId=AGENT_ID, agentVersion="DRAFT", actionGroupName="invoke_fraud_model",
-    actionGroupExecutor={"customControl": "RETURN_CONTROL"},   # you run the tool yourself
-    functionSchema={"functions": [{
-        "name": "invoke_fraud_model",
-        "parameters": {"transaction_id": {"type": "string", "required": True}}}]})
-# at runtime: bedrock-agent-runtime.invoke_agent(...) streams a returnControl event
-# with the chosen function + args; you execute it and post the result back. (LangGraph
-# avoids this dance - tools are just python callables on nodes.)
+from strands import Agent, tool
+from strands.models import BedrockModel
+
+llm = BedrockModel(model_id="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+                   region_name="us-west-2")
+
+@tool
+def invoke_fraud_model(transaction_id: str) -> str:
+    """Score a transaction for fraud risk via the SageMaker endpoint. Returns the risk score."""
+    ...   # call sagemaker_runtime.invoke_endpoint(...) and return the score
+
+@tool
+def retrieve_rules(query: str) -> str:
+    """Retrieve fraud rules matching a query from the Bedrock Knowledge Base."""
+    ...   # thin wrapper around bedrock_agent_rt.retrieve(knowledgeBaseId=KB_ID, ...)
+
+# ... get_customer_profile(account_num) and generate_report(...) the same way ...
+
+fraud_agent = Agent(
+    model=llm,
+    tools=[invoke_fraud_model, retrieve_rules, get_customer_profile, generate_report],
+    system_prompt="You are a fraud investigator. Score the transaction, and for "
+                  "high-risk ones retrieve matching rules, pull the customer profile, "
+                  "then write a structured report. Decide the tool order yourself.")
+
+result = fraud_agent(f"Investigate transaction {txn_id}.")   # model drives the tool loop
 ```
+
+(LangGraph is the same idea with `create_react_agent(llm, tools=[...])` - pick whichever
+you used in class.)
+
+**Optional - the managed-agent route (we did NOT cover this).** AWS Bedrock Agents lets
+you provision a managed agent with action groups and fulfil its `returnControl` callbacks
+via `invoke_agent`. It is a real service, but it is a *deploy* path the course did not
+teach (extra IAM role, `create_agent` / action-group schema, `prepare_agent`), so only
+reach for it if you specifically want to explore it - it is not needed to be "done".
 
 **Hint - CloudWatch audit trail.** Emit each tool call as a structured log line to your
 own log group so the reasoning is auditable:
