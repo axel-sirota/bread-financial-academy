@@ -109,8 +109,21 @@ df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
 ```
 
 Or query via **Athena** (the proposal's path - good for the dashboard): create an
-external table over `s3://bread-academy-shared/capstone2/daily_batches/` with
-`dt` as a partition, `MSCK REPAIR TABLE` to discover partitions, then SQL away.
+external table over the daily batches partitioned by `dt`, repair partitions, then
+SQL away.
+
+```sql
+CREATE EXTERNAL TABLE IF NOT EXISTS daily_batches (
+  chd_account_num string, transaction_amt string, transaction_date int,
+  mrch_sic_cd int, merchant_descr string, mrch_iso3_ctry_cd string,
+  chargeback_label int  -- (declare the columns you query; parquet carries all 28)
+)
+PARTITIONED BY (dt string)
+STORED AS PARQUET
+LOCATION 's3://bread-academy-shared/capstone2/daily_batches/';
+
+MSCK REPAIR TABLE daily_batches;   -- discovers the dt=YYYY-MM-DD partitions
+```
 
 ### The schema contract
 
@@ -120,6 +133,62 @@ external table over `s3://bread-academy-shared/capstone2/daily_batches/` with
 is_cross_border`, `primary_key: transaction_id`, `freshness_sla_hours: 26`. Note: the
 allowed-MCC list is the BASELINE only - the **new MCCs that appear from day 20 SHOULD
 trip your contract check and your drift monitor**. That is the signal, not a bug.
+
+### Raw -> clean: the transform contract (read before you build)
+
+The cleaned schema asks for fields the raw feed does NOT contain verbatim. These are
+the transforms the contract expects. Each is a one-liner; the work is doing all of
+them in your Spark step.
+
+**There is no `transaction_id` in the raw feed.** The contract makes it the primary
+key, so you SYNTHESIZE a stable one (a hash of fields that uniquely identify the row),
+and map the account:
+
+```python
+from pyspark.sql import functions as F
+clean = (raw
+    .withColumn("transaction_id", F.sha2(F.concat_ws("|",
+        "chd_account_num", "authorization_num", "transaction_date", "transaction_amt"), 256))
+    .withColumnRenamed("chd_account_num", "account_id"))
+```
+
+**`transaction_amt` is a signed STRING with a TRAILING minus** (`"42.10-"` for a
+reversal), so `float()` / a plain cast throws. Parse the sign yourself:
+
+```python
+amt = F.regexp_replace("transaction_amt", "-", "").cast("double")
+clean = clean.withColumn("amount",
+    F.when(F.col("transaction_amt").endswith("-"), -amt).otherwise(amt))
+```
+
+**EDH integer dates** (`20260301`) -> real dates/timestamps:
+
+```python
+clean = clean.withColumn("transaction_ts",
+    F.to_timestamp(F.col("transaction_date").cast("string"), "yyyyMMdd"))
+```
+
+**`mrch_iso3_ctry_cd` is ISO-3** (`USA`, `ITA`) but the contract regex is `^[A-Z]{2}$`.
+Map ISO-3 -> ISO-2 (small dict for the countries in the data, or use `pycountry`):
+
+```python
+ISO3_2 = {"USA":"US","ITA":"IT","BRA":"BR","GBR":"GB","MEX":"MX","CAN":"CA",
+          "DEU":"DE","FRA":"FR","NGA":"NG","RUS":"RU","CHN":"CN"}  # extend as needed
+mapper = F.create_map([F.lit(x) for kv in ISO3_2.items() for x in kv])
+clean = clean.withColumn("country_code", mapper[F.col("mrch_iso3_ctry_cd")])
+```
+
+**Derive `channel`** (pos/ecom/atm/p2p) from the raw indicators, in precedence order:
+
+```python
+clean = clean.withColumn("channel",
+    F.when(F.col("atm_flag_cd") == "Y", "atm")
+     .when(F.col("mail_phone_ind") == "Y", "ecom")     # CNP / mail-phone -> ecom
+     .otherwise("pos"))                                 # p2p is rare; pos is the default
+```
+
+`is_cross_border` is just `crss_brdr_chrg_ind == "Y"` (cast to boolean). Now your
+cleaned frame matches the contract and the quality/drift checks can run on it.
 
 ---
 
@@ -133,6 +202,13 @@ trip your contract check and your drift monitor**. That is the signal, not a bug
 Compute drift per run against `reference_window`, write `drift_scores` (run_date,
 column_name, test_type, score, threshold, drift_detected), and **branch**: if
 `drift_detected`, fire the retrain task; otherwise continue.
+
+**What "fire the retrain task" can mean** (any of these counts as done):
+- the simplest: a downstream task that logs the drift and publishes to the
+  `bread-academy-class-alerts` SNS topic (ARN in the `aws-course-shared` scope), or
+- trigger the pre-provisioned retrain job: its id is in the shared scope as
+  `retrain-job-id` (`448738426504032`). You do not have to actually retrain a model -
+  proving the branch routes to the retrain path on the drift days is the graded part.
 
 ---
 
@@ -205,6 +281,27 @@ s3.put_object(Bucket=DAGS_BUCKET, Key=f"{DAG_PREFIX}/capstone2.py",
               Body=open("capstone2_dag.py", "rb").read())
 # poll GET /dags/{dag_id} until 200, then POST /dags/{dag_id}/dagRuns to trigger
 ```
+
+**Hint - the MWAA REST host is NOT the web-UI host, and you need a short-lived token.**
+The fiddly part people miss: ask MWAA for a web-login token, then call the REST API at
+the `webServerHostname` it returns (different from the console URL above):
+
+```python
+import requests
+mwaa = boto3.Session(region_name="us-west-2").client("mwaa")
+tok  = mwaa.create_web_login_token(Name="bread-academy-airflow")
+host = tok["WebServerHostname"]                 # e.g. <id>.c24.airflow.us-west-2.on.aws
+session_token = tok["WebToken"]
+# exchange the web token for an Airflow session cookie, then hit /api/v1:
+r = requests.post(f"https://{host}/aws_mwaa/login", data={"token": session_token})
+cookie = r.headers  # use the returned session for subsequent /api/v1 calls
+api = f"https://{host}/api/v1"
+# requests.get(f"{api}/dags/{dag_id}", cookies=...) then
+# requests.post(f"{api}/dags/{dag_id}/dagRuns", json={"conf": {}}, cookies=...)
+```
+
+(Triggering from the **web UI** is fine too - the REST path is only if you want to
+trigger programmatically, as in Week 22.)
 
 **Suggested DAG shape:**
 

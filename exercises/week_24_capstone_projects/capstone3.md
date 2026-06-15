@@ -207,21 +207,35 @@ silver = (events_m
 
 ---
 
-## Model (Workspace A)
+## Model (role A)
 
 Train **Spark MLlib** `LogisticRegression` and `GBTClassifier` on the silver
-features, compare validation AUC, and register the winner to **Unity Catalog**:
+features, compare validation AUC, and register the winner to **Unity Catalog**.
+
+**Hint - string columns need indexing before assembly.** `credit_score_band` and
+`channel` are strings; MLlib's `VectorAssembler` only takes numerics. Put a
+`StringIndexer` (one per string col) before the `VectorAssembler` in your `Pipeline`,
+or you will hit "Data type string is not supported" at fit time.
 
 ```python
 import mlflow
+from mlflow.tracking import MlflowClient
 mlflow.set_registry_uri("databricks-uc")
-# ... train, then:
-mlflow.spark.log_model(best_model, "model",
-    registered_model_name="bread_academy.student_work.credit_risk_<NN>")
+NAME = "bread_academy.student_work.credit_risk_<NN>"
+# ... train best_model, then:
+info = mlflow.spark.log_model(best_model, "model", registered_model_name=NAME)
+
+# Tag the version, then set a "champion" alias so consumers load it by name (not a
+# hardcoded version number). The alias is what `models:/NAME@champion` resolves to.
+client = MlflowClient()
+ver = info.registered_model_version
+client.set_model_version_tag(NAME, ver, "model_type", "GBTClassifier")
+client.set_model_version_tag(NAME, ver, "val_auc", "0.87")
+client.set_registered_model_alias(NAME, "champion", ver)
 ```
 
-Tag the registered version with the model type and AUC, then deploy a **Model
-Serving** endpoint from that registered version (UI or the serving API).
+Then deploy a **Model Serving** endpoint from that registered version (UI or the
+serving API) - or skip serving and load the model by name in role B (see below).
 
 ---
 
@@ -265,6 +279,34 @@ score = r.json()["predictions"][0]
 workspace: point `HOST` at the OWNER workspace and use a PAT for *that* workspace
 (secret-scope it, never hardcode). The model is reachable either way because it lives in
 the shared catalog, not in a workspace - that is the governance point.
+
+**Hint - `feature_row_dict` must match the training columns by name.** The serving
+input (Route 2) and the `features_df` you `.transform()` (Route 1) have to carry the
+exact feature columns the model was trained on - same names, raw (un-indexed) values;
+the model's own `StringIndexer` stages handle the encoding. The full set:
+
+```python
+feature_row_dict = {
+    "amount": 84.20, "merchant_mcc": 5411, "channel": "pos",      # from the event
+    "utilization_pct": 0.42, "delinquency_count_12mo": 1,         # from credit history
+    "credit_score_band": "good", "account_age_months": 73,
+    "unemployment_rate": 4.1, "fed_funds_rate": 5.25,             # from macro_context
+    "consumer_confidence_index": 61.3,
+}
+```
+
+**Optional - the leak-free way to build that row at scale.** Instead of hand-joining,
+let the Databricks Feature Engineering client assemble it with a point-in-time lookup:
+
+```python
+from databricks.feature_engineering import FeatureEngineeringClient, FeatureLookup
+fe = FeatureEngineeringClient()
+training_set = fe.create_training_set(
+    df=events_df, label="default_label",
+    feature_lookups=[FeatureLookup(
+        table_name="bread_academy.student_work.macro_features_<NN>",
+        lookup_key="month", timestamp_lookup_key="timestamp")])  # as-of, no future leak
+```
 
 **Hint - top-k feature contributions from Spark MLlib.** MLlib has no per-prediction
 explainer. Two workable routes: (a) global importances from the tree model, or (b)
