@@ -254,7 +254,7 @@ high-risk transactions to an investigation task, a final task writes reports to 
 
 ## Deliverables checklist
 
-- [ ] Trained fraud model deployed to a SageMaker endpoint (you evaluated it on a holdout).
+- [ ] (Optional trained/ Claude is oK) Trained fraud model deployed to a SageMaker endpoint (you evaluated it on a holdout, sk learn is also ok).
 - [ ] Bedrock Knowledge Base over `fraud_rules/`, retrieval validated on sample queries.
 - [ ] Agent loop wiring the 4 tools; it chooses its own sequence.
 - [ ] Structured investigation report per high-risk transaction in a sample batch.
