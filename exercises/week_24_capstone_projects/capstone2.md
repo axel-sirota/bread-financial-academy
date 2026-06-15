@@ -89,24 +89,44 @@ point is that YOU transform it. 28 columns; the ones that matter:
 
 ### Read it
 
-From Databricks with Spark (one day, or all days via the partition):
-
-```python
-BUCKET = "bread-academy-shared"
-one_day = spark.read.parquet(f"s3a://{BUCKET}/capstone2/daily_batches/dt=2026-03-01")
-all_days = spark.read.parquet(f"s3a://{BUCKET}/capstone2/daily_batches")  # dt becomes a column
-ref = spark.read.parquet(f"s3a://{BUCKET}/capstone2/reference_window")
-```
-
-Or with boto3 + pandas for a quick look:
+**Use boto3 + pandas to read from S3 - this is the path that works on serverless
+compute** (the default in this workspace). Your per-student AWS keys are exported to
+the Python process by the auth cell, so boto3 reads the course bucket directly:
 
 ```python
 import io, boto3, pandas as pd
 s3 = boto3.Session(region_name="us-west-2").client("s3")
-obj = s3.get_object(Bucket="bread-academy-shared",
-                    Key="capstone2/daily_batches/dt=2026-03-01/transactions.parquet")
-df = pd.read_parquet(io.BytesIO(obj["Body"].read()))
+BUCKET = "bread-academy-shared"
+
+def read_day(dt):                       # dt = "2026-03-01"
+    key = f"capstone2/daily_batches/dt={dt}/transactions.parquet"
+    obj = s3.get_object(Bucket=BUCKET, Key=key)
+    return pd.read_parquet(io.BytesIO(obj["Body"].read()))
+
+one_day = read_day("2026-03-01")
+sdf = spark.createDataFrame(one_day)    # only if you want a Spark DataFrame
+
+# all 30 days: list the partition objects, then concat
+keys = s3.list_objects_v2(Bucket=BUCKET, Prefix="capstone2/daily_batches/")["Contents"]
+ref  = pd.read_parquet(io.BytesIO(
+    s3.get_object(Bucket=BUCKET, Key="capstone2/reference_window/transactions.parquet")["Body"].read()))
 ```
+
+> **Why not `spark.read.parquet("s3a://...")`?** On **serverless** compute the Spark
+> engine runs in a managed JVM you cannot push AWS keys into (no
+> `sparkContext._jsc.hadoopConfiguration()`, no `fs.s3a.*` creds, no instance profile),
+> so an `s3a://` read of this bucket fails with `403 Forbidden` / `UNAUTHORIZED_ACCESS`.
+> That is NOT a permissions bug - your IAM keys do allow the read; the engine just never
+> sees them. The `s3a://` Spark path only works if you attach a **classic Runtime 15.4
+> LTS cluster** and set the Hadoop S3A creds:
+> ```python
+> sc = spark.sparkContext                    # classic cluster ONLY (errors on serverless)
+> hc = sc._jsc.hadoopConfiguration()
+> hc.set("fs.s3a.access.key", aws_access_key)
+> hc.set("fs.s3a.secret.key", aws_secret_key)
+> hc.set("fs.s3a.endpoint", "s3.us-west-2.amazonaws.com")
+> ```
+> If you are on serverless, stick with the boto3/pandas reads above (or Athena below).
 
 Or query via **Athena** (the proposal's path - good for the dashboard): create an
 external table over the daily batches partitioned by `dt`, repair partitions, then

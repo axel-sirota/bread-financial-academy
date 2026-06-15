@@ -56,8 +56,18 @@ Standard datacouch auth cell (see `ENVIRONMENT_SETUP.md`) for the Bedrock call.
 Everything else (Spark, Unity Catalog, Feature Engineering, Model Serving) is native
 Databricks - no AWS keys needed for those. Bedrock model for the explanation layer:
 `us.anthropic.claude-sonnet-4-5-20250929-v1:0`. Your IAM covers S3 read+write to the
-course buckets, so the stream producer and Auto Loader work as-is. (If you prefer to stay
-fully inside Databricks, a DBFS / UC Volume path also works as the Auto Loader source.)
+course buckets, so the stream producer (boto3 `put_object`) works as-is.
+
+> **Auto Loader source path on serverless (read this).** The producer writes with boto3,
+> which is fine on serverless. But Auto Loader reads through the Spark engine, and on
+> **serverless** compute Spark cannot read `s3a://` from the course bucket (no AWS keys
+> reach the managed JVM -> `403 Forbidden` / `UNAUTHORIZED_ACCESS`; it is NOT a
+> permissions bug). So on serverless, point the producer and Auto Loader at a
+> **Unity Catalog Volume** instead of `s3a://`, e.g.
+> `/Volumes/bread_academy/student_work/stream_<NN>/` - the producer writes files there
+> and `spark.readStream...load("/Volumes/.../stream_<NN>")` reads them, keyless. If you
+> instead attach a **classic Runtime 15.4 LTS cluster**, the `s3a://` path works once you
+> set the `fs.s3a.*` Hadoop creds (see Capstone 2's "Read it" note).
 
 ---
 
