@@ -56,6 +56,18 @@ Model to use for the agent: `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (via 
 Embeddings for the KB: `amazon.titan-embed-text-v2:0`. Your IAM already covers Bedrock,
 SageMaker, CloudWatch, and S3 writes to the course buckets - no extra setup needed.
 
+> **IAM roles: read the exact name, never hardcode it.** Two operations make you PASS a
+> role, and passing the wrong name fails with `iam:PassRole ... is not authorized` or
+> `NoSuchEntity` - that is a typo, not a permissions gap. Use the right role per service:
+> - **SageMaker** (deploy your fraud model): `SageMakerStudentExecutionRole`. Read it
+>   from the shared scope so you never mistype it:
+>   `SAGEMAKER_ROLE_ARN = dbutils.secrets.get("aws-course-shared", "sagemaker-execution-role-arn")`
+>   Pass that ARN as `ExecutionRoleArn` / `role=`. It is NOT `SageMakerExecutionRole`
+>   (that role does not exist).
+> - **Bedrock Knowledge Base** (if you build your own, Option B): use the existing
+>   `BreadAcademyKBRole` - pick "Use an existing service role" in the console. Do NOT
+>   create a role and do NOT pass the SageMaker role (Bedrock cannot assume it).
+
 ---
 
 ## The data

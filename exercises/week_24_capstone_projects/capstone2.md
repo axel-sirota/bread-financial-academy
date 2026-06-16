@@ -53,6 +53,14 @@ course buckets) - no extra setup needed.
 
 Bedrock model: `us.anthropic.claude-sonnet-4-5-20250929-v1:0`.
 
+> **IAM role for SageMaker: read the exact name, never hardcode it.** Deploying your
+> chargeback model makes you PASS a role; the wrong name fails with `iam:PassRole ... is
+> not authorized` or `NoSuchEntity` - that is a typo, not a permissions gap. The role is
+> `SageMakerStudentExecutionRole`; read its ARN from the shared scope so you never
+> mistype it:
+> `SAGEMAKER_ROLE_ARN = dbutils.secrets.get("aws-course-shared", "sagemaker-execution-role-arn")`
+> Pass that as `ExecutionRoleArn` / `role=`. It is NOT `SageMakerExecutionRole`.
+
 ---
 
 ## The data (in S3, NOT Unity Catalog)

@@ -58,6 +58,14 @@ Databricks - no AWS keys needed for those. Bedrock model for the explanation lay
 `us.anthropic.claude-sonnet-4-5-20250929-v1:0`. Your IAM covers S3 read+write to the
 course buckets, so the stream producer (boto3 `put_object`) works as-is.
 
+> **Read shared IDs from the scope, never hardcode them.** This capstone is native
+> Databricks (Model Serving is a Databricks endpoint, not SageMaker - no AWS role to
+> pass). The only AWS resource is the Bedrock model id above. If you ever reach for an
+> AWS resource id or role ARN, read it from the `aws-course-shared` scope (e.g.
+> `dbutils.secrets.get("aws-course-shared", "sagemaker-execution-role-arn")`) rather than
+> typing a name - a mistyped role/id fails with `iam:PassRole ... not authorized` or
+> `NoSuchEntity`, which looks like a permissions error but is a typo.
+
 > **Auto Loader source path on serverless (read this).** The producer writes with boto3,
 > which is fine on serverless. But Auto Loader reads through the Spark engine, and on
 > **serverless** compute Spark cannot read `s3a://` from the course bucket (no AWS keys
